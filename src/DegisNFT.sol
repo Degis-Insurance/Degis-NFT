@@ -14,10 +14,13 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     }
     Status public status;
 
+    // Amount of NFTs already minted
     uint256 public mintedAmount;
 
+    // wallet mapping that allows wallets to mint during airdrop and allowlist sale
     mapping (address => bool) public allowlist;
     mapping (address => bool) public airdroplist;
+    // amount minted on public sale
     mapping (address => uint256) public mintedOnPublic;
 
 
@@ -37,20 +40,35 @@ contract DegisNFT is ERC721, Ownable, Pausable {
         status = Status.Init;
     }
 
+    /**
+     * @notice changes minting status
+     * @param  _newStatus new minting status
+     */
     function setStatus(Status _newStatus) external onlyOwner {
         emit StatusChange(status, _newStatus);
         status = _newStatus;
     }
 
+    /**
+     * @notice Sets the base URI for the NFTs
+     * @param  _baseURI new base URI for the collection
+     */
     function setBaseURI(string _baseURI) external onlyOwner {
         baseURI = _setbaseURI;
     }
 
-    function ownerMint(uint quantity) external onlyOwner {   
-        _mint(msg.sender, quantity);
-        mintedAmount += quantity;
+    /**
+     * @notice Owner minting
+     * @param  _quantity amount of NFTs to mint
+     */
+    function ownerMint(uint _quantity) external onlyOwner {   
+        _mint(msg.sender, _quantity);
+        mintedAmount += _quantity;
     }
 
+    /**
+     * @notice Claimable NFTs
+     */
     function airdropClaim() external {   
         if (status != Status.AirdropClaim) revert WrongStatus();
         require(airdroplist[msg.sender], "Only airdrop wallets");
@@ -59,16 +77,25 @@ contract DegisNFT is ERC721, Ownable, Pausable {
         mintedAmount += 1;
     }
 
-    function allowlistSale(uint quantity) external {
+    /**
+     * @notice Allowlist minting
+     * @param  _quantity amount of NFTs to mint
+     */
+    function allowlistSale(uint _quantity) external {
         if (status != Status.AllowlistSale) revert WrongStatus();
         require(allowlist[msg.sender], "Only allowlist wallets");
-        require(msg.value >= quantity * allowPrice, "Not enough ether");
-        require(quantity <= maxAllowlist, "Too many tokens");
-        _mint(msg.sender, quantity);
+        require(msg.value >= _quantity * allowPrice, "Not enough ether");
+        require(_quantity <= maxAllowlist, "Too many tokens");
+        _mint(msg.sender, _quantity);
         allowlist[msg.sender] = false;
-        mintedAmount += quantity;
+        mintedAmount += _quantity;
     }
 
+
+    /**
+     * @notice  public sale mint. Allowed to mint several times as long as total per wallet is bellow maxPublicSale
+     * @param  _quantity amount of NFTs to mint
+     */
     function publicSale(uint quantity) external payable {
         if (status != Status.PublicSale) revert WrongStatus();
         require(tx.origin == msg.sender, "No proxy transactions");
@@ -80,17 +107,29 @@ contract DegisNFT is ERC721, Ownable, Pausable {
         mintedAmount += quantity;
     }
 
+    /**
+     * @notice   adds wallets to airdrop list
+     * @param  _addresses array of addresses to add to airdrop loop
+     */
     function addWalletsAirdrop(address[] _addresses) external onlyOwner {
         for (uint i=0; i< _addresses.length; i++) {
             airdroplist[_addresses[i]] = true;
         }
     }
+
+     /**
+     * @notice   adds wallets to allowlist
+     * @param  _addresses array of addresses to add to airdrop loop
+     */
     function addWalletsAllowlist(address[] _addresses) external onlyOwner {
         for (uint i=0; i< _addresses.length; i++) {
             allowlist[_addresses[i]] = true;
         }
     }
 
+    /**
+     * @notice   withdraws funds to owner
+     */
     function withdraw() external onlyOwner {
         require(msg.sender.transfer(this.balance));
     }
