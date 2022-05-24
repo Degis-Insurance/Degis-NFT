@@ -35,10 +35,8 @@ contract DegisNFT is ERC721, Ownable, Pausable {
 
     error WrongStatus();
 
-    constructor(_degisToken, _degisPool) ERC721("DegisNFT", "DegisNFT") {
+    constructor() ERC721("DegisNFT", "DegisNFT") {
         status = Status.Init;
-        degisToken = _degisToken;
-        degisPool = _degisPool;
     }
 
     function setStatus(Status _newStatus) external onlyOwner {
