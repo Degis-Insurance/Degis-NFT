@@ -14,8 +14,6 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     }
     Status public status;
 
-    address public owner;
-
     uint256 public mintedAmount;
 
     mapping (address => bool) public allowlist;
