@@ -96,4 +96,8 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     function withdraw() external onlyOwner {
         require(msg.sender.transfer(this.balance));
     }
+
+    function setBaseURI(string memory uri) external onlyOwner {
+        baseURI = uri;
+    }
 }
