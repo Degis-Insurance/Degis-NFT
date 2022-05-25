@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 contract DegisNFT is ERC721, Ownable, Pausable {
     enum Status {
@@ -53,8 +53,8 @@ contract DegisNFT is ERC721, Ownable, Pausable {
      * @notice Sets the base URI for the NFTs
      * @param  _baseURI new base URI for the collection
      */
-    function setBaseURI(string _baseURI) external onlyOwner {
-        baseURI = _setbaseURI;
+    function setBaseURI(string calldata _baseURI) external onlyOwner {
+        baseURI = _baseURI;
     }
 
     /**
@@ -81,7 +81,7 @@ contract DegisNFT is ERC721, Ownable, Pausable {
      * @notice Allowlist minting
      * @param  _quantity amount of NFTs to mint
      */
-    function allowlistSale(uint _quantity) external {
+    function allowlistSale(uint _quantity) external payable {
         if (status != Status.AllowlistSale) revert WrongStatus();
         require(allowlist[msg.sender], "Only allowlist wallets");
         require(msg.value >= _quantity * allowPrice, "Not enough ether");
@@ -96,22 +96,22 @@ contract DegisNFT is ERC721, Ownable, Pausable {
      * @notice  public sale mint. Allowed to mint several times as long as total per wallet is bellow maxPublicSale
      * @param  _quantity amount of NFTs to mint
      */
-    function publicSale(uint quantity) external payable {
+    function publicSale(uint _quantity) external payable {
         if (status != Status.PublicSale) revert WrongStatus();
         require(tx.origin == msg.sender, "No proxy transactions");
-        require(msg.value >= quantity * mintPrice, "Not enough ether");
-        require(mintedOnPublic[msg.sender] + quantity <= maxPublicSale, "Max public sale reached");
-        require(mintedOnPublic[msg.sender] + quantity + mintedAmount <= maxMintSupply, "Max mint supply reached");
-        _mint(msg.sender, quantity);
-        mintedOnPublic[msg.sender] += quantity;
-        mintedAmount += quantity;
+        require(msg.value >= _quantity * mintPrice, "Not enough ether");
+        require(mintedOnPublic[msg.sender] + _quantity <= maxPublicSale, "Max public sale reached");
+        require(mintedOnPublic[msg.sender] + _quantity + mintedAmount <= maxMintSupply, "Max mint supply reached");
+        _mint(msg.sender, _quantity);
+        mintedOnPublic[msg.sender] += _quantity;
+        mintedAmount += _quantity;
     }
 
     /**
      * @notice   adds wallets to airdrop list
      * @param  _addresses array of addresses to add to airdrop loop
      */
-    function addWalletsAirdrop(address[] _addresses) external onlyOwner {
+    function addWalletsAirdrop(address[] calldata _addresses) external onlyOwner {
         for (uint i=0; i< _addresses.length; i++) {
             airdroplist[_addresses[i]] = true;
         }
@@ -121,7 +121,7 @@ contract DegisNFT is ERC721, Ownable, Pausable {
      * @notice   adds wallets to allowlist
      * @param  _addresses array of addresses to add to airdrop loop
      */
-    function addWalletsAllowlist(address[] _addresses) external onlyOwner {
+    function addWalletsAllowlist(address[] calldata _addresses) external onlyOwner {
         for (uint i=0; i< _addresses.length; i++) {
             allowlist[_addresses[i]] = true;
         }
@@ -130,8 +130,10 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     /**
      * @notice   withdraws funds to owner
      */
-    function withdraw() external onlyOwner {
-        require(msg.sender.transfer(this.balance));
-    }
+    function withdraw() external payable onlyOwner returns(bool) {
+        uint256 balance = address(this).balance;
+        (bool complete,) = msg.sender.call{value: balance}("");
+        return complete;
 
+    }
 }
