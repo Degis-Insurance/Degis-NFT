@@ -89,7 +89,7 @@ contract DegisNFT is ERC721, Ownable {
         if (status != Status.AllowlistSale) revert WrongStatus();
         require(allowlist[msg.sender], "Only allowlist wallets");
 
-        uint256 amountToPay = _quantity * mintPrice;
+        uint256 amountToPay = _quantity * allowPrice;
 
         require(msg.value >= amountToPay, "Not enough ether");
         require(_quantity <= maxAllowlist, "Too many tokens");
