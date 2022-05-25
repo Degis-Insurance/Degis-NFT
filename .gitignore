@@ -2,5 +2,6 @@ cache/
 out/
 node_modules
 .deps
+artifacts/
 # remixd -s E:\Degis\Degis-NFT\Degis-NFT --remix-ide https://remix.ethereum.org 
 # npx hardhat node
