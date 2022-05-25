@@ -1,0 +1,30 @@
+{
+  "name": "degis-nft",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SnowPrimate/Degis-NFT.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SnowPrimate/Degis-NFT/issues"
+  },
+  "homepage": "https://github.com/SnowPrimate/Degis-NFT#readme",
+  "devDependencies": {
+    "hardhat": "^2.9.6"
+  },
+  "dependencies": {
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "cargo": "^0.8.0"
+  }
+}
