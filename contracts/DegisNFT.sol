@@ -4,9 +4,8 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 
-contract DegisNFT is ERC721, Ownable, Pausable {
+contract DegisNFT is ERC721, Ownable {
     enum Status {
         Init,
         AirdropClaim,
@@ -21,8 +20,10 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     // wallet mapping that allows wallets to mint during airdrop and allowlist sale
     mapping(address => bool) public allowlist;
     mapping(address => bool) public airdroplist;
-    // amount minted on public sale
+    // amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
+
+    mapping(uint256 => string) public superPowers;
 
     uint256 public constant maxMintSupply = 499;
     uint256 public constant mintPrice = 1 ether;
@@ -56,10 +57,10 @@ contract DegisNFT is ERC721, Ownable, Pausable {
 
     /**
      * @notice Set the base URI for the NFTs
-     * @param  _baseURI New base URI for the collection
+     * @param  baseURI_ New base URI for the collection
      */
-    function setBaseURI(string calldata _baseURI) external onlyOwner {
-        baseURI = _baseURI;
+    function setBaseURI(string calldata baseURI_) external onlyOwner {
+        baseURI = baseURI_;
     }
 
     /**
@@ -89,11 +90,18 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     function allowlistSale(uint256 _quantity) external payable {
         if (status != Status.AllowlistSale) revert WrongStatus();
         require(allowlist[msg.sender], "Only allowlist wallets");
-        require(msg.value >= _quantity * allowPrice, "Not enough ether");
+
+        uint256 amountToPay = _quantity * mintPrice;
+
+        require(msg.value >= amountToPay, "Not enough ether");
         require(_quantity <= maxAllowlist, "Too many tokens");
         _mint(msg.sender, _quantity);
         allowlist[msg.sender] = false;
         mintedAmount += _quantity;
+
+        if (msg.value > amountToPay) {
+            payable(msg.sender).transfer(msg.value - amountToPay);
+        }
     }
 
     /**
@@ -159,10 +167,35 @@ contract DegisNFT is ERC721, Ownable, Pausable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    // implement another withdraw function for any other type of token?
-
+    /**
+     * @notice   withdraws specificed ERC20 and amount to owner
+      * @param  _token ERC20 to withdraw
+      * @param  _amount amount to withdraw
+     */
     function withdrawERC20(address _token, uint256 _amount) external onlyOwner {
         IERC20(_token).transfer(msg.sender, _amount);
         emit WithdrawERC20(_token, _amount, msg.sender);
+    }
+
+    
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    function _mint(address _to, uint256 _amount) internal override {
+        for (uint i = 1; i <= _amount; i++) {
+            uint256 id = mintedAmount + i;
+            super._mint(_to, id);
+        }
+    }
+
+    function superPower(uint256 _tokenId) public view returns (string memory){
+        return superPowers[_tokenId];
+    }
+
+    function setSuperPowers(string[] calldata _superPowers) external onlyOwner {
+        for (uint256 i = 0; i < _superPowers.length; i++) {
+            superPowers[i+1] = _superPowers[i];
+        }
     }
 }
