@@ -130,10 +130,8 @@ contract DegisNFT is ERC721, Ownable, Pausable {
     /**
      * @notice   withdraws funds to owner
      */
-    function withdraw() external payable onlyOwner returns(bool) {
-        uint256 balance = address(this).balance;
-        (bool complete,) = msg.sender.call{value: balance}("");
-        return complete;
-
+    function withdraw() external onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
     }
+    // implement another withdraw function for any other type of token?
 }
