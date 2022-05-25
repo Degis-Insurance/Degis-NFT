@@ -23,8 +23,6 @@ contract DegisNFT is ERC721, Ownable {
     // amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
 
-    mapping(uint256 => string) public superPowers;
-
     uint256 public constant maxMintSupply = 499;
     uint256 public constant mintPrice = 1 ether;
     uint256 public constant allowPrice = 0.5 ether;
@@ -177,25 +175,22 @@ contract DegisNFT is ERC721, Ownable {
         emit WithdrawERC20(_token, _amount, msg.sender);
     }
 
-    
+    /**
+     * @notice   returns baseURI
+     */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
 
+    /**
+     * @notice   mint multiple NFTs
+      * @param  _to address to send NFTs to
+      * @param  _amount amount to mint
+     */
     function _mint(address _to, uint256 _amount) internal override {
         for (uint i = 1; i <= _amount; i++) {
             uint256 id = mintedAmount + i;
             super._mint(_to, id);
-        }
-    }
-
-    function superPower(uint256 _tokenId) public view returns (string memory){
-        return superPowers[_tokenId];
-    }
-
-    function setSuperPowers(string[] calldata _superPowers) external onlyOwner {
-        for (uint256 i = 0; i < _superPowers.length; i++) {
-            superPowers[i+1] = _superPowers[i];
         }
     }
 }
