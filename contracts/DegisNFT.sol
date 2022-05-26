@@ -48,9 +48,9 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Change minting status
      * @param  _newStatus New minting status
      */
-    function setStatus(Status _newStatus) external onlyOwner {
-        emit StatusChange(status, _newStatus);
-        status = _newStatus;
+    function setStatus(uint256 _newStatus) external onlyOwner {
+        emit StatusChange(status, Status(_newStatus));
+        status = Status(_newStatus);
     }
 
     /**
@@ -188,7 +188,7 @@ contract DegisNFT is ERC721, Ownable {
       * @param  _amount amount to mint
      */
     function _mint(address _to, uint256 _amount) internal override {
-        for (uint i = 1; i <= _amount; i++) {
+        for (uint256 i = 1; i <= _amount; i++) {
             uint256 id = mintedAmount + i;
             super._mint(_to, id);
         }
