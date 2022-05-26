@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract DegisNFT is ERC721, Ownable {
     enum Status {
@@ -18,8 +19,8 @@ contract DegisNFT is ERC721, Ownable {
     uint256 public mintedAmount;
 
     // wallet mapping that allows wallets to mint during airdrop and allowlist sale
-    mapping(address => bool) public allowlist;
-    mapping(address => bool) public airdroplist;
+    mapping(address => bool) public allowlistMinted;
+    mapping(address => bool) public airdroplistClaimed;
     // amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
 
@@ -30,6 +31,8 @@ contract DegisNFT is ERC721, Ownable {
     uint256 public constant maxAllowlist = 3;
 
     string public baseURI;
+
+    bytes32 public merkleRoot;
 
     event StatusChange(Status oldStatus, Status newStatus);
     event WithdrawERC20(
@@ -48,9 +51,9 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Change minting status
      * @param  _newStatus New minting status
      */
-    function setStatus(Status _newStatus) external onlyOwner {
-        emit StatusChange(status, _newStatus);
-        status = _newStatus;
+    function setStatus(uint256 _newStatus) external onlyOwner {
+        emit StatusChange(status, Status(_newStatus));
+        status = Status(_newStatus);
     }
 
     /**
@@ -59,6 +62,10 @@ contract DegisNFT is ERC721, Ownable {
      */
     function setBaseURI(string calldata baseURI_) external onlyOwner {
         baseURI = baseURI_;
+    }
+
+    function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
+        merkleRoot = _merkleRoot;
     }
 
     /**
@@ -73,11 +80,12 @@ contract DegisNFT is ERC721, Ownable {
     /**
      * @notice Claimable NFTs
      */
-    function airdropClaim() external {
+    function airdropClaim(bytes32[] calldata _merkleProof) external {
         if (status != Status.AirdropClaim) revert WrongStatus();
-        require(airdroplist[msg.sender], "Only airdrop wallets");
+        require(!airdroplistClaimed[msg.sender], "already claimed");
+        require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
+        airdroplistClaimed[msg.sender] = true;
         _mint(msg.sender, 1);
-        airdroplist[msg.sender] = false;
         mintedAmount += 1;
     }
 
@@ -85,16 +93,16 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Allowlist minting
      * @param  _quantity amount of NFTs to mint
      */
-    function allowlistSale(uint256 _quantity) external payable {
+    function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof) external payable {
         if (status != Status.AllowlistSale) revert WrongStatus();
-        require(allowlist[msg.sender], "Only allowlist wallets");
-
+        require(!allowlistMinted[msg.sender], "Already minted");
+        require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
         uint256 amountToPay = _quantity * allowPrice;
 
         require(msg.value >= amountToPay, "Not enough ether");
         require(_quantity <= maxAllowlist, "Too many tokens");
         _mint(msg.sender, _quantity);
-        allowlist[msg.sender] = false;
+        allowlistMinted[msg.sender] = true;
         mintedAmount += _quantity;
 
         if (msg.value > amountToPay) {
@@ -133,32 +141,6 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
-     * @notice   adds wallets to airdrop list
-     * @param  _addresses array of addresses to add to airdrop loop
-     */
-    function addWalletsAirdrop(address[] calldata _addresses)
-        external
-        onlyOwner
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            airdroplist[_addresses[i]] = true;
-        }
-    }
-
-    /**
-     * @notice   adds wallets to allowlist
-     * @param  _addresses array of addresses to add to airdrop loop
-     */
-    function addWalletsAllowlist(address[] calldata _addresses)
-        external
-        onlyOwner
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            allowlist[_addresses[i]] = true;
-        }
-    }
-
-    /**
      * @notice   withdraws funds to owner
      */
     function withdraw() external onlyOwner {
@@ -167,8 +149,8 @@ contract DegisNFT is ERC721, Ownable {
 
     /**
      * @notice   withdraws specificed ERC20 and amount to owner
-      * @param  _token ERC20 to withdraw
-      * @param  _amount amount to withdraw
+     * @param  _token ERC20 to withdraw
+     * @param  _amount amount to withdraw
      */
     function withdrawERC20(address _token, uint256 _amount) external onlyOwner {
         IERC20(_token).transfer(msg.sender, _amount);
@@ -184,11 +166,11 @@ contract DegisNFT is ERC721, Ownable {
 
     /**
      * @notice   mint multiple NFTs
-      * @param  _to address to send NFTs to
-      * @param  _amount amount to mint
+     * @param  _to address to send NFTs to
+     * @param  _amount amount to mint
      */
     function _mint(address _to, uint256 _amount) internal override {
-        for (uint i = 1; i <= _amount; i++) {
+        for (uint256 i = 1; i <= _amount; i++) {
             uint256 id = mintedAmount + i;
             super._mint(_to, id);
         }
