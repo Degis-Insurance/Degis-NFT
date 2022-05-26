@@ -44,7 +44,7 @@ contract DegisNFT is ERC721, Ownable {
     error WrongStatus();
 
     constructor() ERC721("DegisNFT", "DegisNFT") {
-        status = Status.Init;
+        status = Status.AirdropClaim;
     }
 
     /**

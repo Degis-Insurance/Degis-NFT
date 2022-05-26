@@ -8,10 +8,11 @@ use(require('chai-as-promised'))
 describe('WhitelistSale', function () {
   it('allow only whitelisted accounts to mint', async () => {
     const accounts = await hre.ethers.getSigners()
-    const whitelisted = accounts.slice(0, 5)
-    const notWhitelisted = accounts.slice(5, 10)
+    const allowlisted = accounts.slice(0, 5)
+    const airdroplisted = accounts.slice(5, 10)
+    const WrongStatus = new Error()
 
-    const leaves = whitelisted.map(account => keccak256(account.address))
+    const leaves = allowlisted.map(account => keccak256(account.address))
     const tree = new MerkleTree(leaves, keccak256, { sort: true })
     const merkleRoot = tree.getHexRoot()
 
@@ -20,11 +21,15 @@ describe('WhitelistSale', function () {
     await whitelistSale.deployed()
     await whitelistSale.setMerkleRoot(merkleRoot)
 
-    const merkleProof = tree.getHexProof(keccak256(whitelisted[0].address))
-    const invalidMerkleProof = tree.getHexProof(keccak256(notWhitelisted[0].address))
+    const allowlistMerkleProof = tree.getHexProof(keccak256(allowlisted[0].address))
+    const airdropMerkleProof = tree.getHexProof(keccak256(airdroplisted[0].address))
 
-    await expect(whitelistSale.mint(merkleProof)).to.not.be.rejected
-    await expect(whitelistSale.mint(merkleProof)).to.be.rejectedWith('already claimed')
-    await expect(whitelistSale.connect(notWhitelisted[0]).mint(invalidMerkleProof)).to.be.rejectedWith('invalid merkle proof')
+    await whitelistSale.setStatus(1)
+    // await expect(whitelistSale.status()).to.equal("1");
+    
+    await expect(whitelistSale.connect(airdroplisted[0]).airdropClaim(airdropMerkleProof)).to.not.be.rejected;
+    // await expect(whitelistSale.connect( allowlisted[0]).allowlistSale(3, merkleProof)).to.be.reverted;
+    // await expect(whitelistSale.publicSale(1)).to.be.reverted;
+    // await expect(whitelistSale.connect(notWhitelisted[0]).allowlistSale(invalidMerkleProof)).to.be.rejectedWith('invalid merkle proof')
   })
 })
