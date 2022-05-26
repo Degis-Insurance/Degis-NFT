@@ -24,7 +24,7 @@ contract NFTStaking is Ownable, IERC721Receiver {
     }
 
     function setIveDEG (address _veDeg) external onlyOwner {
-        IveDEG = IveDEG(_veDeg);
+        veDEGContract = IveDEG(_veDeg);
     }
 
     function stakeChampion(uint256 calldata _tokenId) external {
