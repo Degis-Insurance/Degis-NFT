@@ -1873,6 +1873,14 @@
     "base64-js" "^1.3.1"
     "ieee754" "^1.1.13"
 
+"buffer@^6.0.3":
+  "integrity" "sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA=="
+  "resolved" "https://registry.npmjs.org/buffer/-/buffer-6.0.3.tgz"
+  "version" "6.0.3"
+  dependencies:
+    "base64-js" "^1.3.1"
+    "ieee754" "^1.2.1"
+
 "bufferutil@^4.0.1":
   "version" "4.0.3"
   dependencies:
@@ -3853,7 +3861,7 @@
   dependencies:
     "punycode" "2.1.0"
 
-"ieee754@^1.1.13":
+"ieee754@^1.1.13", "ieee754@^1.2.1":
   "integrity" "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="
   "resolved" "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz"
   "version" "1.2.1"
@@ -4256,7 +4264,7 @@
     "json-schema" "0.4.0"
     "verror" "1.10.0"
 
-"keccak@^3.0.0":
+"keccak@^3.0.0", "keccak@^3.0.2":
   "integrity" "sha512-PyKKjkH53wDMLGrvmRGSNWgmSxZOUqbnXwKL9tmgbFYA1iAYqW21kfR7mZXV0MlESiefxQQE9X9fTa3X+2MPDQ=="
   "resolved" "https://registry.npmjs.org/keccak/-/keccak-3.0.2.tgz"
   "version" "3.0.2"
@@ -4270,6 +4278,15 @@
   dependencies:
     "node-addon-api" "^2.0.0"
     "node-gyp-build" "^4.2.0"
+
+"keccak256@^1.0.6":
+  "integrity" "sha512-8GLiM01PkdJVGUhR1e6M/AvWnSqYS0HaERI+K/QtStGDGlSTx2B1zTqZk4Zlqu5TxHJNTxWAdP9Y+WI50OApUw=="
+  "resolved" "https://registry.npmjs.org/keccak256/-/keccak256-1.0.6.tgz"
+  "version" "1.0.6"
+  dependencies:
+    "bn.js" "^5.2.0"
+    "buffer" "^6.0.3"
+    "keccak" "^3.0.2"
 
 "keyv@^3.0.0":
   "version" "3.1.0"
