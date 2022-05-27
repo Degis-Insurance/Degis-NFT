@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "E:\\Degis\\Degis-NFT\\Degis-NFT\\contracts\\DegisNFT.sol": {
-      "lastModificationDate": 1653604028666,
+      "lastModificationDate": 1653682224083,
       "contentHash": "e378c45f7e1674257b944b07333a9e19",
       "sourceName": "contracts/DegisNFT.sol",
       "solcConfig": {
@@ -154,41 +154,6 @@
       ],
       "artifacts": [
         "Ownable"
-      ]
-    },
-    "E:\\Degis\\Degis-NFT\\Degis-NFT\\node_modules\\@openzeppelin\\contracts\\utils\\cryptography\\MerkleProof.sol": {
-      "lastModificationDate": 1653594654402,
-      "contentHash": "8206339fb35134e364332d17ea7b5d60",
-      "sourceName": "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol",
-      "solcConfig": {
-        "version": "0.8.13",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "MerkleProof"
       ]
     },
     "E:\\Degis\\Degis-NFT\\Degis-NFT\\node_modules\\@openzeppelin\\contracts\\token\\ERC721\\IERC721.sol": {
@@ -542,6 +507,41 @@
       "imports": [],
       "versionPragmas": [],
       "artifacts": []
+    },
+    "E:\\Degis\\Degis-NFT\\Degis-NFT\\node_modules\\@openzeppelin\\contracts\\utils\\cryptography\\MerkleProof.sol": {
+      "lastModificationDate": 1653594654402,
+      "contentHash": "8206339fb35134e364332d17ea7b5d60",
+      "sourceName": "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol",
+      "solcConfig": {
+        "version": "0.8.13",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "MerkleProof"
+      ]
     }
   }
 }

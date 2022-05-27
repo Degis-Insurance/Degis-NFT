@@ -23,9 +23,6 @@ describe('WhitelistSale', function () {
 
     const allowlistMerkleProof = tree.getHexProof(keccak256(allowlisted[0].address))
     const airdropMerkleProof = tree.getHexProof(keccak256(airdroplisted[0].address))
-
-    await whitelistSale.setStatus(1)
-    // await expect(whitelistSale.status()).to.equal("1");
     
     await expect(whitelistSale.connect(airdroplisted[0]).airdropClaim(airdropMerkleProof)).to.not.be.rejected;
     // await expect(whitelistSale.connect( allowlisted[0]).allowlistSale(3, merkleProof)).to.be.reverted;
