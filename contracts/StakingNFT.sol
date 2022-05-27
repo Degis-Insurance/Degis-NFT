@@ -3,12 +3,12 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract IDegisNFT {
+interface IDegisNFT {
     function ownerOf (uint256 tokenId) external view returns (address);
     function safeTransferFrom (address from, address to, uint256 tokenId) external;
 }
 
-contract IveDEG {
+interface IveDEG {
     function updateNFTMultiplier(address _address, uint256 _multiplier) external;
 }
 
