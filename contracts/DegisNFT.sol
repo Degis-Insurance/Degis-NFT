@@ -38,8 +38,6 @@ contract DegisNFT is ERC721, Ownable {
         address receiver
     );
 
-    error WrongStatus();
-
     constructor() ERC721("DegisNFT", "DegisNFT") {
         status = Status.Init;
     }
@@ -74,7 +72,7 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Claimable NFTs
      */
     function airdropClaim() external {
-        if (status != Status.AirdropClaim) revert WrongStatus();
+        require(status == Status.AirdropClaim, "Not in airdrop claim phase");
         require(airdroplist[msg.sender], "Only airdrop wallets");
         _mint(msg.sender, 1);
         airdroplist[msg.sender] = false;
@@ -86,7 +84,7 @@ contract DegisNFT is ERC721, Ownable {
      * @param  _quantity amount of NFTs to mint
      */
     function allowlistSale(uint256 _quantity) external payable {
-        if (status != Status.AllowlistSale) revert WrongStatus();
+        require(status == Status.AllowlistSale, "Not in allowlist sale phase");
         require(allowlist[msg.sender], "Only allowlist wallets");
 
         uint256 amountToPay = _quantity * allowPrice;
@@ -107,7 +105,7 @@ contract DegisNFT is ERC721, Ownable {
      * @param  _quantity amount of NFTs to mint
      */
     function publicSale(uint256 _quantity) external payable {
-        if (status != Status.PublicSale) revert WrongStatus();
+        require(status == Status.PublicSale, "Not in public sale phase");
         require(tx.origin == msg.sender, "No proxy transactions");
 
         uint256 amountToPay = _quantity * mintPrice;
