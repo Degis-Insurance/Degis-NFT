@@ -44,3 +44,4 @@ contract NFTStaking is Ownable {
         champions[msg.sender] = 0;
     }
 }
+

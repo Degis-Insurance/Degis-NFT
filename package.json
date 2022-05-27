@@ -30,6 +30,8 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "cargo": "^0.8.0"
+    "cargo": "^0.8.0",
+    "chai-as-promised": "^7.1.1",
+    "merkletreejs": "^0.2.31"
   }
 }
