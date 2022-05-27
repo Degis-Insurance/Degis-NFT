@@ -78,9 +78,13 @@ contract DegisNFT is ERC721, Ownable {
     /**
      * @notice Claimable NFTs
      */
-    function airdropClaim() external {
-        require(status == Status.AirdropClaim, "Not in airdrop claim phase");
-        require(airdroplist[msg.sender], "Only airdrop wallets");
+
+    function airdropClaim(bytes32[] calldata _merkleProof) external {
+       require(status == Status.AirdropClaim, "Not in airdrop phase");
+        require(!airdroplistClaimed[msg.sender], "already claimed");
+        require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
+        airdroplistClaimed[msg.sender] = true;
+
         _mint(msg.sender, 1);
         mintedAmount += 1;
     }
@@ -90,9 +94,9 @@ contract DegisNFT is ERC721, Ownable {
      * @param  _quantity amount of NFTs to mint
      */
         
-    function allowlistSale(uint256 _quantity) external payable {
+    function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof) external payable {
         require(status == Status.AllowlistSale, "Not in allowlist sale phase");
-        require(!allowlistMinted[msg.sender], "Already minted");
+        require(!allowlistMinted[msg.sender], "already minted");
         require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
 
         uint256 amountToPay = _quantity * allowPrice;
