@@ -3,63 +3,86 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract DegisNFT is ERC721, Ownable {
-    enum Status {
-        Init,
-        AirdropClaim,
-        AllowlistSale,
-        PublicSale
-    }
-    Status public status;
+    using SafeERC20 for IERC20;
+
+    // Status defined as constants rather than enum
+    uint256 public constant STATUS_INIT = 0;
+    uint256 public constant STATUS_AIRDROP = 1;
+    uint256 public constant STATUS_ALLOWLIST = 2;
+    uint256 public constant STATUS_PUBLICSALE = 3;
+
+    address public constant DEG = 0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645;
+
+    uint256 public constant MAX_SUPPLY = 499;
+
+    uint256 public constant PRICE_PUBLICSALE = 1 ether;
+    uint256 public constant PRICE_ALLOWLIST = 0.5 ether;
+
+    uint256 public constant MAXAMOUNT_PUBLICSALE = 5;
+    uint256 public constant MAXAMOUNT_ALLOWLIST = 3;
+
+    // Current status of minting
+    uint256 public status;
 
     // Amount of NFTs already minted
+    // Current tokenId
     uint256 public mintedAmount;
 
     // wallet mapping that allows wallets to mint during airdrop and allowlist sale
     mapping(address => bool) public allowlistMinted;
     mapping(address => bool) public airdroplistClaimed;
+
     // amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
 
-    uint256 public constant maxMintSupply = 499;
-    uint256 public constant mintPrice = 1 ether;
-    uint256 public constant allowPrice = 0.5 ether;
-    uint256 public constant maxPublicSale = 5;
-    uint256 public constant maxAllowlist = 3;
-
     string public baseURI;
 
+    // Merkle root of airdrop list
     bytes32 public airdropMerkleRoot;
+
+    // Merkle root of allowlist
     bytes32 public allowlistMerkleRoot;
 
-    event StatusChange(Status oldStatus, Status newStatus);
+    event StatusChange(uint256 oldStatus, uint256 newStatus);
+    event SetBaseURI(string baseUri);
     event WithdrawERC20(
         address indexed token,
         uint256 amount,
         address receiver
     );
 
-    constructor() ERC721("DegisNFT", "DegisNFT") {
-        status = Status.Init;
-    }
+    /**
+     * @notice Constructor
+     *
+     * @dev The initial status is Init (default as zero)
+     */
+    constructor() ERC721("DegisNFT", "DegisNFT") {}
+
     /**
      * @notice Change minting status
-     * @param  _newStatus New minting status
+     *
+     * @dev Only by the owner
+     *
+     * @param _newStatus New minting status
      */
     function setStatus(uint256 _newStatus) external onlyOwner {
-        emit StatusChange(status, Status(_newStatus));
-        status = Status(_newStatus);
+        emit StatusChange(status, _newStatus);
+        status = _newStatus;
     }
 
     /**
      * @notice Set the base URI for the NFTs
+     *
      * @param  baseURI_ New base URI for the collection
      */
     function setBaseURI(string calldata baseURI_) external onlyOwner {
         baseURI = baseURI_;
+        emit SetBaseURI(baseURI_);
     }
 
     function setAirdropMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
@@ -84,9 +107,16 @@ contract DegisNFT is ERC721, Ownable {
      */
 
     function airdropClaim(bytes32[] calldata _merkleProof) external {
-       require(status == Status.AirdropClaim, "Not in airdrop phase");
+        require(status == STATUS_AIRDROP, "Not in airdrop phase");
         require(!airdroplistClaimed[msg.sender], "already claimed");
-        require(MerkleProof.verify(_merkleProof, airdropMerkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
+        require(
+            MerkleProof.verify(
+                _merkleProof,
+                airdropMerkleRoot,
+                keccak256(abi.encodePacked(msg.sender))
+            ),
+            "invalid merkle proof"
+        );
         airdroplistClaimed[msg.sender] = true;
 
         _mint(msg.sender, 1);
@@ -97,22 +127,33 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Allowlist minting
      * @param  _quantity amount of NFTs to mint
      */
-        
-    function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof) external payable {
-        require(status == Status.AllowlistSale, "Not in allowlist sale phase");
+
+    function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof)
+        external
+        payable
+    {
+        require(status == STATUS_ALLOWLIST, "Not in allowlist sale phase");
         require(!allowlistMinted[msg.sender], "already minted");
-        require(MerkleProof.verify(_merkleProof, allowlistMerkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
+        require(_quantity <= MAXAMOUNT_ALLOWLIST, "Too many tokens");
+        require(
+            MerkleProof.verify(
+                _merkleProof,
+                allowlistMerkleRoot,
+                keccak256(abi.encodePacked(msg.sender))
+            ),
+            "invalid merkle proof"
+        );
 
-        uint256 amountToPay = _quantity * allowPrice;
+        uint256 amountToPay = _quantity * PRICE_ALLOWLIST;
 
-        require(msg.value >= amountToPay, "Not enough ether");
-        require(_quantity <= maxAllowlist, "Too many tokens");
+        // Transfer deg tokens
+        IERC20(DEG).safeTransferFrom(msg.sender, address(this), amountToPay);
+
         _mint(msg.sender, _quantity);
         allowlistMinted[msg.sender] = true;
-        mintedAmount += _quantity;
 
-        if (msg.value > amountToPay) {
-            payable(msg.sender).transfer(msg.value - amountToPay);
+        unchecked {
+            mintedAmount += _quantity;
         }
     }
 
@@ -121,41 +162,44 @@ contract DegisNFT is ERC721, Ownable {
      * @param  _quantity amount of NFTs to mint
      */
     function publicSale(uint256 _quantity) external payable {
-        require(status == Status.PublicSale, "Not in public sale phase");
+        require(status == STATUS_PUBLICSALE, "Not in public sale phase");
         require(tx.origin == msg.sender, "No proxy transactions");
 
-        uint256 amountToPay = _quantity * mintPrice;
-
-        require(msg.value >= amountToPay, "Not enough ether");
+        uint256 userAlreadyMinted = mintedOnPublic[msg.sender];
         require(
-            mintedOnPublic[msg.sender] + _quantity <= maxPublicSale,
-            "Max public sale reached"
+            userAlreadyMinted + _quantity <= MAXAMOUNT_PUBLICSALE,
+            "Max public sale amount reached"
         );
         require(
-            mintedOnPublic[msg.sender] + _quantity + mintedAmount <=
-                maxMintSupply,
+            userAlreadyMinted + _quantity + mintedAmount <= MAX_SUPPLY,
             "Max mint supply reached"
         );
-        _mint(msg.sender, _quantity);
-        mintedOnPublic[msg.sender] += _quantity;
-        mintedAmount += _quantity;
 
-        // Refund
-        if (msg.value > amountToPay) {
-            payable(msg.sender).transfer(msg.value - amountToPay);
+        // DEG to pay for minting
+        uint256 amountToPay = _quantity * PRICE_PUBLICSALE;
+
+        // Transfer DEG to this contract
+        IERC20(DEG).safeTransferFrom(msg.sender, address(this), amountToPay);
+
+        _mint(msg.sender, _quantity);
+
+        unchecked {
+            mintedOnPublic[msg.sender] += _quantity;
+            mintedAmount += _quantity;
         }
     }
 
     /**
-     * @notice   withdraws funds to owner
+     * @notice Withdraw avax by the owner
      */
     function withdraw() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
     }
 
     /**
-     * @notice   withdraws specificed ERC20 and amount to owner
-     * @param  _token ERC20 to withdraw
+     * @notice Withdraw specificed ERC20 and amount to owner
+     *
+     * @param  _token  ERC20 to withdraw
      * @param  _amount amount to withdraw
      */
     function withdrawERC20(address _token, uint256 _amount) external onlyOwner {
@@ -164,21 +208,31 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
-     * @notice   returns baseURI
+     * @notice BaseURI
      */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
 
     /**
-     * @notice   mint multiple NFTs
-     * @param  _to address to send NFTs to
-     * @param  _amount amount to mint
+     * @notice Mint multiple NFTs
+     *
+     * @param  _to     Address to mint NFTs to
+     * @param  _amount Amount to mint
      */
     function _mint(address _to, uint256 _amount) internal override {
-        for (uint256 i = 1; i <= _amount; i++) {
-            uint256 id = mintedAmount + i;
-            super._mint(_to, id);
+        uint256 alreadyMinted = mintedAmount;
+
+        for (uint256 i = 1; i <= _amount; ) {
+            super._mint(_to, ++alreadyMinted);
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        unchecked {
+            mintedAmount += _amount;
         }
     }
 }

@@ -5,40 +5,58 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 interface IDegisNFT {
-    function ownerOf (uint256 tokenId) external view returns (address);
-    function safeTransferFrom (address from, address to, uint256 tokenId) external;
+    function ownerOf(uint256 tokenId) external view returns (address);
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
 }
 
 interface IveDEG {
-    function updateNFTMultiplier(address _address, uint256 _multiplier) external;
+    function updateNFTMultiplier(address _address, uint256 _multiplier)
+        external;
 }
 
 contract NFTStaking is Ownable, IERC721Receiver {
-
     IDegisNFT public degisNFTContract;
     IveDEG public veDEGContract;
 
     mapping(address => uint256) public champions;
 
-    event championReceived(address operator,address from,uint256 tokenId, bytes data);
+    event championReceived(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes data
+    );
     event championWithdrawn(uint256 tokenId, address to);
 
-    function setDegisNFTContract (address _degisNFT) external onlyOwner {
+    function setDegisNFTContract(address _degisNFT) external onlyOwner {
         degisNFTContract = IDegisNFT(_degisNFT);
     }
 
-    function setIveDEG (address _veDeg) external onlyOwner {
+    function setIveDEG(address _veDeg) external onlyOwner {
         veDEGContract = IveDEG(_veDeg);
     }
 
-    function onERC721Received(address operator,address from,uint256 tokenId, bytes calldata data) external override returns(bytes4){
-        return this.onERC721Received.selector;
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override returns (bytes4) {
         emit championReceived(operator, from, tokenId, data);
+        return this.onERC721Received.selector;
     }
 
     function stakeChampion(uint256 _tokenId) external {
-        require(degisNFTContract.ownerOf(_tokenId) != address(0), "token not owned");
-        require(degisNFTContract.ownerOf(_tokenId) == msg.sender, "not owner of token");
+       
+        require(
+            degisNFTContract.ownerOf(_tokenId) == msg.sender,
+            "not owner of token"
+        );
         require(_tokenId != 0, "tokenId cannot be 0");
         // uint256 _multiplier = _tokenId <= 99 ? 15 : 12;
         // veDEGContract.updateNFTMultiplier(msg.sender,_multiplier);

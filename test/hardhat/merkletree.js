@@ -51,3 +51,9 @@ describe('airdropSale & allowlistSale', function () {
     await expect(whitelistSale.connect(airdrop[0]).allowlistSale(1, invalidMerkleProof2, {value: ethers.utils.parseEther("1")})).to.be.rejectedWith('invalid merkle proof')
   })
 })
+
+describe("public sale", function(){
+  it("should be able to have public sale", async function() {
+    
+  })
+})
