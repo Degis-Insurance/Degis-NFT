@@ -32,7 +32,8 @@ contract DegisNFT is ERC721, Ownable {
 
     string public baseURI;
 
-    bytes32 public merkleRoot;
+    bytes32 public airdropMerkleRoot;
+    bytes32 public allowlistMerkleRoot;
 
     event StatusChange(Status oldStatus, Status newStatus);
     event WithdrawERC20(
@@ -42,9 +43,8 @@ contract DegisNFT is ERC721, Ownable {
     );
 
     constructor() ERC721("DegisNFT", "DegisNFT") {
-        status = Status.AirdropClaim;
+        status = Status.Init;
     }
-
     /**
      * @notice Change minting status
      * @param  _newStatus New minting status
@@ -62,8 +62,12 @@ contract DegisNFT is ERC721, Ownable {
         baseURI = baseURI_;
     }
 
-    function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-        merkleRoot = _merkleRoot;
+    function setAirdropMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
+        airdropMerkleRoot = _merkleRoot;
+    }
+
+    function setAllowlistMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
+        allowlistMerkleRoot = _merkleRoot;
     }
 
     /**
@@ -80,9 +84,9 @@ contract DegisNFT is ERC721, Ownable {
      */
 
     function airdropClaim(bytes32[] calldata _merkleProof) external {
-        if (status != Status.AirdropClaim) revert WrongStatus();
+       require(status == Status.AirdropClaim, "Not in airdrop phase");
         require(!airdroplistClaimed[msg.sender], "already claimed");
-        require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
+        require(MerkleProof.verify(_merkleProof, airdropMerkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
         airdroplistClaimed[msg.sender] = true;
 
         _mint(msg.sender, 1);
@@ -93,11 +97,11 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Allowlist minting
      * @param  _quantity amount of NFTs to mint
      */
-
+        
     function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof) external payable {
-        if (status != Status.AllowlistSale) revert WrongStatus();
-        require(!allowlistMinted[msg.sender], "Already minted");
-        require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
+        require(status == Status.AllowlistSale, "Not in allowlist sale phase");
+        require(!allowlistMinted[msg.sender], "already minted");
+        require(MerkleProof.verify(_merkleProof, allowlistMerkleRoot, keccak256(abi.encodePacked(msg.sender))), "invalid merkle proof");
 
         uint256 amountToPay = _quantity * allowPrice;
 
