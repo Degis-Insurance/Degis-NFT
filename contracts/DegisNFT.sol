@@ -16,12 +16,15 @@ contract DegisNFT is ERC721, Ownable {
     uint256 public constant STATUS_ALLOWLIST = 2;
     uint256 public constant STATUS_PUBLICSALE = 3;
 
-    address public constant DEG = 0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645;
+    // address public constant DEG = 0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645;
+    address public DEG;
 
-    uint256 public constant MAX_SUPPLY = 499;
+    // Total supply: 500
+    uint256 public constant MAX_SUPPLY = 500;
 
-    uint256 public constant PRICE_PUBLICSALE = 1 ether;
-    uint256 public constant PRICE_ALLOWLIST = 0.5 ether;
+    // Public sale price is 200 DEG
+    uint256 public constant PRICE_PUBLICSALE = 200 ether;
+    uint256 public constant PRICE_ALLOWLIST = 100 ether;
 
     uint256 public constant MAXAMOUNT_PUBLICSALE = 5;
     uint256 public constant MAXAMOUNT_ALLOWLIST = 3;
@@ -73,6 +76,11 @@ contract DegisNFT is ERC721, Ownable {
     function setStatus(uint256 _newStatus) external onlyOwner {
         emit StatusChange(status, _newStatus);
         status = _newStatus;
+    }
+
+    function setDEG(address _deg) external onlyOwner {
+        require(_deg != address(0), "Zero address");
+        DEG = _deg;
     }
 
     /**
