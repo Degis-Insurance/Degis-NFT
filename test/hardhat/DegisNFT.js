@@ -139,8 +139,88 @@ describe("Degis NFT Mint", function () {
             // the owner of token id 1 is user3
             expect(await nft.ownerOf(1)).to.equal(user3.address);
 
+            // Spend 100 deg for minting
             expect(await deg.balanceOf(user3.address)).to.equal(parseUnits("900"));
             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("100"));
+
+
+            // Temporarily use a new proof
+            await deg.mint(user4.address, parseUnits("1000"));
+            await deg.connect(user4).approve(nft.address, parseUnits("1000"));
+
+
+            const allowlist = [user3, user4];
+            proof_allowlist = tree_allowlist.getHexProof(keccak256(allowlist[1].address))
+            await expect(nft.connect(user4).allowlistSale(1, proof_allowlist)).to.emit(nft, "AllowlistSale").withArgs(user4.address, 1, 2);
+
+
+            // Spend 100 deg for minting
+            expect(await deg.balanceOf(user4.address)).to.equal(parseUnits("900"));
+            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("200"));
+
+        })
+    })
+
+    describe("Public Sale", function () {
+        beforeEach(async function () {
+            await deg.mint(dev_account.address, parseUnits("1000"));
+            await deg.mint(user1.address, parseUnits("1000"));
+
+            await deg.approve(nft.address, parseUnits("1000"));
+            await deg.connect(user1).approve(nft.address, parseUnits("1000"));
+        })
+
+        it("should not be able to public sale before setting status", async function () {
+            await expect(nft.publicSale(1)).to.be.revertedWith("Not in public sale phase");
+
+            await nft.setStatus(1);
+            await expect(nft.publicSale(1)).to.be.revertedWith("Not in public sale phase");
+
+            await nft.setStatus(2);
+            await expect(nft.publicSale(1)).to.be.revertedWith("Not in public sale phase");
+        })
+
+        it("should not be able to mint more than the maxAmount", async function () {
+            await nft.setStatus(3);
+
+            await expect(nft.publicSale(6)).to.be.revertedWith("Max public sale amount reached");
+
+            await nft.publicSale(1);
+            await expect(nft.publicSale(5)).to.be.revertedWith("Max public sale amount reached");
+        })
+
+        it("should be able to participate in public sale", async function () {
+            await nft.setStatus(3);
+
+            // Buy 1
+            await expect(nft.publicSale(1)).to.emit(nft, "PublicSale").withArgs(dev_account.address, 1, 1);
+            // Buy 2
+            await expect(nft.publicSale(2)).to.emit(nft, "PublicSale").withArgs(dev_account.address, 2, 3);
+            
+            // Deg balance check
+            expect(await deg.balanceOf(dev_account.address)).to.equal(parseUnits("400"));
+            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("600"));
+
+            // Nft check
+            expect(await nft.balanceOf(dev_account.address)).to.equal(3);
+            expect(await nft.ownerOf(1)).to.equal(dev_account.address);
+            expect(await nft.ownerOf(2)).to.equal(dev_account.address);
+            expect(await nft.ownerOf(3)).to.equal(dev_account.address);
+
+
+            // Another user public sale
+            await expect(nft.connect(user1).publicSale(1)).to.emit(nft, "PublicSale").withArgs(user1.address, 1, 4);
+            await expect(nft.connect(user1).publicSale(1)).to.emit(nft, "PublicSale").withArgs(user1.address, 1, 5);
+
+             // Deg balance check
+             expect(await deg.balanceOf(user1.address)).to.equal(parseUnits("600"));
+             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("1000"));
+ 
+             // Nft check
+             expect(await nft.balanceOf(user1.address)).to.equal(2);
+             expect(await nft.ownerOf(4)).to.equal(user1.address);
+             expect(await nft.ownerOf(5)).to.equal(user1.address);
+            
         })
     })
 })

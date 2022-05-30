@@ -59,7 +59,8 @@ contract DegisNFT is ERC721, Ownable {
         address receiver
     );
     event AirdropClaim(address user, uint256 tokenId);
-    event AllowlistSale(address user, uint256 quantity, uint256 mintedAmount);
+    event AllowlistSale(address user, uint256 quantity, uint256 tokenId);
+    event PublicSale(address user, uint256 quantity, uint256 tokenId);
 
     /**
      * @notice Constructor
@@ -195,6 +196,8 @@ contract DegisNFT is ERC721, Ownable {
         unchecked {
             mintedOnPublic[msg.sender] += _quantity;
         }
+
+        emit PublicSale(msg.sender, _quantity, mintedAmount);
     }
 
     /**
