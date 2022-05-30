@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -199,5 +200,26 @@ contract DegisNFT is ERC721, Ownable {
 
     function isAirdrop(address _wallet) external view returns (bool) {
         return airdroplist[_wallet];
+    }
+
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
+        require(index < balanceOf(owner), 'owner index out of bounds');
+        uint256 tokenIdsIdx;
+        address currOwnershipAddr;
+        unchecked {
+            for (uint256 i = 1; i <= mintedAmount; i++) {
+                address ownership = ownerOf(i);
+                if (ownership != address(0)) {
+                    currOwnershipAddr = ownership;
+                }
+                if (currOwnershipAddr == owner) {
+                    if (tokenIdsIdx == index) {
+                        return i;
+                    }
+                    tokenIdsIdx++;
+                }
+            }
+        }
+        revert("unable to get token of owner by index");
     }
 }
