@@ -33,8 +33,8 @@ contract DegisNFT is ERC721, Ownable {
     uint256 public status;
 
     // Amount of NFTs already minted
-    // Current tokenId (start from 1)
-    uint256 public mintedAmount = 1;
+    // Current tokenId 
+    uint256 public mintedAmount;
 
     // wallet mapping that allows wallets to mint during airdrop and allowlist sale
     mapping(address => bool) public allowlistMinted;
@@ -59,6 +59,7 @@ contract DegisNFT is ERC721, Ownable {
         address receiver
     );
     event AirdropClaim(address user, uint256 tokenId);
+    event AllowlistSale(address user, uint256 quantity, uint256 mintedAmount);
 
     /**
      * @notice Constructor
@@ -130,7 +131,7 @@ contract DegisNFT is ERC721, Ownable {
 
         _mint(msg.sender, 1);
 
-        emit AirdropClaim(msg.sender, mintedAmount - 1);
+        emit AirdropClaim(msg.sender, mintedAmount );
     }
 
     /**
@@ -161,6 +162,8 @@ contract DegisNFT is ERC721, Ownable {
 
         _mint(msg.sender, _quantity);
         allowlistMinted[msg.sender] = true;
+
+        emit AllowlistSale(msg.sender, _quantity, mintedAmount);
     }
 
     /**
@@ -226,7 +229,7 @@ contract DegisNFT is ERC721, Ownable {
      * @param  _amount Amount to mint
      */
     function _mint(address _to, uint256 _amount) internal override {
-        uint256 alreadyMinted = mintedAmount - 1;
+        uint256 alreadyMinted = mintedAmount;
 
         for (uint256 i = 1; i <= _amount; ) {
             super._mint(_to, ++alreadyMinted);

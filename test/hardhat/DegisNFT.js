@@ -94,6 +94,7 @@ describe("Degis NFT Mint", function () {
             await expect(nft.connect(user1).airdropClaim(proof_airdrop)).to.emit(nft, "AirdropClaim").withArgs(user1.address, 1);
 
             // Check status
+            expect(await nft.mintedAmount()).to.equal(1);
             // user1 has 1 nft
             expect(await nft.balanceOf(user1.address)).to.equal(1);
             // the owner of token id 1 is user1
@@ -105,10 +106,41 @@ describe("Degis NFT Mint", function () {
             await expect(nft.connect(user2).airdropClaim(proof_airdrop)).to.emit(nft, "AirdropClaim").withArgs(user2.address, 2);
 
             // Check status
+            expect(await nft.mintedAmount()).to.equal(2);
             // user1 has 1 nft
             expect(await nft.balanceOf(user2.address)).to.equal(1);
             // the owner of token id 1 is user1
             expect(await nft.ownerOf(2)).to.equal(user2.address);
+        })
+
+        it("should not be able to allowlist sale with no deg", async function () {
+            await nft.setStatus(2);
+
+            // No allowance
+            await expect(nft.connect(user3).allowlistSale(1, proof_allowlist)).to.be.rejectedWith("ERC20: insufficient allowance");
+
+            // No balance
+            await deg.connect(user3).approve(nft.address, parseUnits("1000"));
+            await expect(nft.connect(user3).allowlistSale(1, proof_allowlist)).to.be.rejectedWith("ERC20: transfer amount exceeds balance");
+        })
+
+        it("should be able to participate in allowlist sale", async function () {
+            await nft.setStatus(2);
+
+            await deg.mint(user3.address, parseUnits("1000"));
+            await deg.connect(user3).approve(nft.address, parseUnits("1000"));
+
+            await expect(nft.connect(user3).allowlistSale(1, proof_allowlist)).to.emit(nft, "AllowlistSale").withArgs(user3.address, 1, 1);
+
+            // Check status
+            expect(await nft.mintedAmount()).to.equal(1);
+            // user3 has 1 nft
+            expect(await nft.balanceOf(user3.address)).to.equal(1);
+            // the owner of token id 1 is user3
+            expect(await nft.ownerOf(1)).to.equal(user3.address);
+
+            expect(await deg.balanceOf(user3.address)).to.equal(parseUnits("900"));
+            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("100"));
         })
     })
 })
