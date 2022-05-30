@@ -35,7 +35,13 @@ describe('airdropSale & allowlistSale', function () {
     const merkleProof2 = tree2.getHexProof(keccak256(allowlist[0].address))
     const invalidMerkleProof2 = tree2.getHexProof(keccak256(airdrop[0].address))
 
-    await expect(whitelistSale.airdropClaim(merkleProof)).to.not.be.rejected
+    try{
+      await expect(whitelistSale.isAirdrop(airdrop[0].address,merkleProof)).to.not.be.rejected;
+    } catch(error){
+      console.log(error)
+    }
+    
+    await expect(whitelistSale.airdropClaim(merkleProof)).to.not.be.rejected;
     await expect(whitelistSale.airdropClaim(merkleProof)).to.be.rejectedWith('already claimed')
     await expect(whitelistSale.connect(allowlist[0]).airdropClaim(invalidMerkleProof)).to.be.rejectedWith('invalid merkle proof')
 
