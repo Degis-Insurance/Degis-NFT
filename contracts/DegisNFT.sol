@@ -183,10 +183,10 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     function isAllowlist(address _wallet, bytes32[] calldata _merkleProof) external view returns (bool) {
-        return MerkleProof.verify(_merkleProof, allowlistMerkleRoot, keccak256(abi.encodePacked(msg.sender)));
+        return MerkleProof.verify(_merkleProof, allowlistMerkleRoot, keccak256(abi.encodePacked(_wallet)));
     }
 
     function isAirdrop(address _wallet, bytes32[] calldata _merkleProof) external view returns (bool) {
-        return MerkleProof.verify(_merkleProof, airdropMerkleRoot, keccak256(abi.encodePacked(msg.sender)));
+        return MerkleProof.verify(_merkleProof, airdropMerkleRoot, keccak256(abi.encodePacked(_wallet)));
     }
 }
