@@ -191,4 +191,13 @@ contract DegisNFT is ERC721, Ownable {
             super._mint(_to, id);
         }
     }
+
+    //
+    function isAllowlist(address _wallet) external view returns (bool) {
+        return allowlist[_wallet];
+    }
+
+    function isAirdrop(address _wallet) external view returns (bool) {
+        return airdroplist[_wallet];
+    }
 }
