@@ -68,6 +68,9 @@ describe("Degis NFT Mint", function () {
 
             proof_allowlist = tree_allowlist.getHexProof(keccak256(allowlist[0].address))
             wrongProof_allowlist = tree_allowlist.getHexProof(keccak256(airdrop_list[0].address))
+
+            await nft.setAirdropMerkleRoot(root_airdrop);
+            await nft.setAllowlistMerkleRoot(root_allowlist);
         });
 
         it("should not be able to claim before setting status", async function () {
@@ -75,8 +78,37 @@ describe("Degis NFT Mint", function () {
             await expect(nft.allowlistSale(1, proof_allowlist)).to.be.rejectedWith("Not in allowlist sale phase")
         });
 
-        it("should be able to claim airdrops", async function () {
+        it("should not be able to claim by wrong proofs", async function () {
+            await nft.setStatus(1);
 
+            // Wrong user
+            await expect(nft.airdropClaim(proof_airdrop)).to.be.rejectedWith("invalid merkle proof");
+
+            // True user with wrong proof
+            await expect(nft.connect(user1).airdropClaim(proof_allowlist)).to.be.rejectedWith("invalid merkle proof");
+        })
+
+        it("should be able to claim airdrops", async function () {
+            await nft.setStatus(1);
+
+            await expect(nft.connect(user1).airdropClaim(proof_airdrop)).to.emit(nft, "AirdropClaim").withArgs(user1.address, 1);
+
+            // Check status
+            // user1 has 1 nft
+            expect(await nft.balanceOf(user1.address)).to.equal(1);
+            // the owner of token id 1 is user1
+            expect(await nft.ownerOf(1)).to.equal(user1.address);
+
+            // Temporarily use a new proof
+            const airdrop_list = [user1, user2];
+            proof_airdrop = tree_airdrop.getHexProof(keccak256(airdrop_list[1].address))
+            await expect(nft.connect(user2).airdropClaim(proof_airdrop)).to.emit(nft, "AirdropClaim").withArgs(user2.address, 2);
+
+            // Check status
+            // user1 has 1 nft
+            expect(await nft.balanceOf(user2.address)).to.equal(1);
+            // the owner of token id 1 is user1
+            expect(await nft.ownerOf(2)).to.equal(user2.address);
         })
     })
 })
