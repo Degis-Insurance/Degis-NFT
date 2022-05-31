@@ -43,6 +43,15 @@ describe("Degis NFT Mint", function () {
         it("should have the correct init status", async function () {
             expect(await nft.status()).to.equal(await nft.STATUS_INIT());
         });
+
+        it("should have the correct baseURI", async function () {
+            expect(await nft.baseURI()).to.equal("");
+
+            await nft.setBaseURI("https://degis.io");
+            expect(await nft.baseURI()).to.equal("https://degis.io");
+
+            // expect(await nft.tokenURI(1)).to.equal("https://degis.io/1")
+        })
     })
 
     describe("Airdrop Claim & Allowlist Sale", function () {
@@ -196,7 +205,7 @@ describe("Degis NFT Mint", function () {
             await expect(nft.publicSale(1)).to.emit(nft, "PublicSale").withArgs(dev_account.address, 1, 1);
             // Buy 2
             await expect(nft.publicSale(2)).to.emit(nft, "PublicSale").withArgs(dev_account.address, 2, 3);
-            
+
             // Deg balance check
             expect(await deg.balanceOf(dev_account.address)).to.equal(parseUnits("400"));
             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("600"));
@@ -212,15 +221,112 @@ describe("Degis NFT Mint", function () {
             await expect(nft.connect(user1).publicSale(1)).to.emit(nft, "PublicSale").withArgs(user1.address, 1, 4);
             await expect(nft.connect(user1).publicSale(1)).to.emit(nft, "PublicSale").withArgs(user1.address, 1, 5);
 
-             // Deg balance check
-             expect(await deg.balanceOf(user1.address)).to.equal(parseUnits("600"));
-             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("1000"));
- 
-             // Nft check
-             expect(await nft.balanceOf(user1.address)).to.equal(2);
-             expect(await nft.ownerOf(4)).to.equal(user1.address);
-             expect(await nft.ownerOf(5)).to.equal(user1.address);
-            
+            // Deg balance check
+            expect(await deg.balanceOf(user1.address)).to.equal(parseUnits("600"));
+            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("1000"));
+
+            // Nft check
+            expect(await nft.balanceOf(user1.address)).to.equal(2);
+            expect(await nft.ownerOf(4)).to.equal(user1.address);
+            expect(await nft.ownerOf(5)).to.equal(user1.address);
+
         })
     })
+
+    describe("Mixed sale", function () {
+        let leaves_airdrop, tree_airdrop, root_airdrop;
+        let leaves_allowlist, tree_allowlist, root_allowlist;
+
+        let proof_airdrop_user1, proof_airdrop_user2, proof_allowlist, wrongProof_allowlist;
+
+        beforeEach(async function () {
+            await deg.mint(dev_account.address, parseUnits("100000"));
+            await deg.mint(user1.address, parseUnits("100000"));
+            await deg.mint(user2.address, parseUnits("100000"));
+            await deg.mint(user3.address, parseUnits("100000"));
+            await deg.mint(user4.address, parseUnits("100000"));
+
+            await deg.approve(nft.address, parseUnits("100000"));
+            await deg.connect(user1).approve(nft.address, parseUnits("100000"));
+            await deg.connect(user2).approve(nft.address, parseUnits("100000"));
+            await deg.connect(user3).approve(nft.address, parseUnits("100000"));
+            await deg.connect(user4).approve(nft.address, parseUnits("100000"));
+
+            const airdrop_list = [user1, user2];
+            leaves_airdrop = airdrop_list.map(account => keccak256(account.address));
+            tree_airdrop = new MerkleTree(leaves_airdrop, keccak256, { sort: true });
+            root_airdrop = tree_airdrop.getHexRoot();
+
+            const allowlist = [user3, user4];
+            leaves_allowlist = allowlist.map(account => keccak256(account.address));
+            tree_allowlist = new MerkleTree(leaves_allowlist, keccak256, { sort: true });
+            root_allowlist = tree_allowlist.getHexRoot();
+
+            await nft.setAirdropMerkleRoot(root_airdrop);
+            await nft.setAllowlistMerkleRoot(root_allowlist);
+
+
+            proof_airdrop_user1 = tree_airdrop.getHexProof(keccak256(airdrop_list[0].address))
+            proof_airdrop_user2 = tree_airdrop.getHexProof(keccak256(airdrop_list[1].address))
+
+            proof_allowlist_user3 = tree_allowlist.getHexProof(keccak256(allowlist[0].address))
+            proof_allowlist_user4 = tree_allowlist.getHexProof(keccak256(allowlist[1].address))
+        })
+
+        it("should be able to finish the whole sale process", async function () {
+            // Init status
+            expect(await nft.status()).to.equal(await nft.STATUS_INIT());
+
+
+            // Airdrop claim
+            await nft.setStatus(1);
+            expect(await nft.status()).to.equal(await nft.STATUS_AIRDROP());
+
+            expect(await nft.mintedAmount()).to.equal(0);
+
+            await nft.connect(user1).airdropClaim(proof_airdrop_user1);
+            expect(await nft.mintedAmount()).to.equal(1);
+            expect(await nft.balanceOf(user1.address)).to.equal(1);
+            expect(await nft.ownerOf(1)).to.equal(user1.address);
+
+            await nft.connect(user2).airdropClaim(proof_airdrop_user2);
+            expect(await nft.mintedAmount()).to.equal(2);
+            expect(await nft.balanceOf(user2.address)).to.equal(1);
+            expect(await nft.ownerOf(2)).to.equal(user2.address);
+
+            // Allowlist Sale
+            await nft.setStatus(2);
+            expect(await nft.status()).to.equal(await nft.STATUS_ALLOWLIST());
+
+            await nft.connect(user3).allowlistSale(3, proof_allowlist_user3);
+            expect(await nft.mintedAmount()).to.equal(5);
+            expect(await nft.balanceOf(user3.address)).to.equal(3);
+            expect(await nft.ownerOf(3)).to.equal(user3.address);
+            expect(await nft.ownerOf(5)).to.equal(user3.address);
+
+            await nft.connect(user4).allowlistSale(3, proof_allowlist_user4);
+            expect(await nft.mintedAmount()).to.equal(8);
+            expect(await nft.balanceOf(user3.address)).to.equal(3);
+            expect(await nft.ownerOf(6)).to.equal(user4.address);
+            expect(await nft.ownerOf(8)).to.equal(user4.address);
+
+            // Public Sale
+            await nft.setStatus(3);
+            expect(await nft.status()).to.equal(await nft.STATUS_PUBLICSALE());
+
+            await nft.publicSale(5);
+            expect(await nft.mintedAmount()).to.equal(13);
+
+            await nft.connect(user1).publicSale(5);
+            expect(await nft.mintedAmount()).to.equal(18);
+
+
+            // Some extra test for uri
+            await nft.setBaseURI("https://degis.io/");
+            expect(await nft.baseURI()).to.equal("https://degis.io/");
+
+            expect(await nft.tokenURI(1)).to.equal("https://degis.io/1")
+        })
+    })
+
 })
