@@ -320,6 +320,13 @@ describe("Degis NFT Mint", function () {
             await nft.connect(user1).publicSale(5);
             expect(await nft.mintedAmount()).to.equal(18);
 
+            await nft.connect(user2).publicSale(2);
+            expect(await nft.mintedAmount()).to.equal(20);
+
+            await nft.ownerMint(480);
+
+            await expect(nft.ownerMint(1)).to.be.revertedWith("Exceed max supply");
+            await expect(nft.connect(user2).publicSale(1)).to.be.revertedWith("Max mint supply reached");
 
             // Some extra test for uri
             await nft.setBaseURI("https://degis.io/");

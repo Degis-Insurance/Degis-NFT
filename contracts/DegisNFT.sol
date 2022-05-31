@@ -33,7 +33,7 @@ contract DegisNFT is ERC721, Ownable {
     uint256 public status;
 
     // Amount of NFTs already minted
-    // Current tokenId 
+    // Current tokenId
     uint256 public mintedAmount;
 
     // wallet mapping that allows wallets to mint during airdrop and allowlist sale
@@ -109,8 +109,8 @@ contract DegisNFT is ERC721, Ownable {
      * @param  _quantity Amount of NFTs to mint
      */
     function ownerMint(uint256 _quantity) external onlyOwner {
+        require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
         _mint(msg.sender, _quantity);
-        mintedAmount += _quantity;
     }
 
     /**
@@ -132,7 +132,7 @@ contract DegisNFT is ERC721, Ownable {
 
         _mint(msg.sender, 1);
 
-        emit AirdropClaim(msg.sender, mintedAmount );
+        emit AirdropClaim(msg.sender, mintedAmount);
     }
 
     /**

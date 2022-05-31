@@ -14,14 +14,15 @@ interface IDegisNFT {
     ) external;
 }
 
-interface IveDEG {
-    function updateNFTMultiplier(address _address, uint256 _multiplier)
-        external;
+interface IVeDEG {
+    function boostVeDEG(address _address, uint256 _multiplier) external;
+
+    function unBoostVeDEG(address _address) external;
 }
 
 contract NFTStaking is Ownable, IERC721Receiver {
-    IDegisNFT public degisNFTContract;
-    IveDEG public veDEGContract;
+    IDegisNFT public degisNFT;
+    IVeDEG public veDEG;
 
     mapping(address => uint256) public champions;
 
@@ -33,12 +34,17 @@ contract NFTStaking is Ownable, IERC721Receiver {
     );
     event championWithdrawn(uint256 tokenId, address to);
 
+    constructor(address _degisNFT, address _veDEG) {
+        degisNFT = IDegisNFT(_degisNFT);
+        veDEG = IVeDEG(_veDEG);
+    }
+
     function setDegisNFTContract(address _degisNFT) external onlyOwner {
-        degisNFTContract = IDegisNFT(_degisNFT);
+        degisNFT = IDegisNFT(_degisNFT);
     }
 
     function setIveDEG(address _veDeg) external onlyOwner {
-        veDEGContract = IveDEG(_veDeg);
+        veDEG = IVeDEG(_veDeg);
     }
 
     function onERC721Received(
@@ -52,23 +58,24 @@ contract NFTStaking is Ownable, IERC721Receiver {
     }
 
     function stakeChampion(uint256 _tokenId) external {
-       
-        require(
-            degisNFTContract.ownerOf(_tokenId) == msg.sender,
-            "not owner of token"
-        );
+        require(degisNFT.ownerOf(_tokenId) == msg.sender, "not owner of token");
         require(_tokenId != 0, "tokenId cannot be 0");
         // uint256 _multiplier = _tokenId <= 99 ? 15 : 12;
         // veDEGContract.updateNFTMultiplier(msg.sender,_multiplier);
-        degisNFTContract.safeTransferFrom(msg.sender, address(this), _tokenId);
+        degisNFT.safeTransferFrom(msg.sender, address(this), _tokenId);
         champions[msg.sender] = _tokenId;
     }
 
     function withdrawChampion(uint256 _tokenId) external {
         require(champions[msg.sender] == _tokenId, "not owner of token");
+
         // veDEGContract.updateNFTMultiplier(msg.sender, 10);
-        degisNFTContract.safeTransferFrom(address(this), msg.sender, _tokenId);
+        degisNFT.safeTransferFrom(address(this), msg.sender, _tokenId);
         champions[msg.sender] = 0;
+
+        // Unboost
+        veDEG.unBoostVeDEG(msg.sender);
+
         emit championWithdrawn(_tokenId, msg.sender);
     }
 }

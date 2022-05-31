@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/liyang/code/Degis/Degis-NFT/contracts/DegisNFT.sol": {
-      "lastModificationDate": 1653892669736,
-      "contentHash": "288e475422802b4bf772dbc16addb156",
+      "lastModificationDate": 1654015628723,
+      "contentHash": "1b9d6589d511a4ca37913d69421321d4",
       "sourceName": "contracts/DegisNFT.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -479,8 +479,8 @@
       ]
     },
     "/home/liyang/code/Degis/Degis-NFT/contracts/StakingNFT.sol": {
-      "lastModificationDate": 1653840723878,
-      "contentHash": "ace16bd00880439fd822fb323649edf2",
+      "lastModificationDate": 1654015371003,
+      "contentHash": "a26d7cbf1b80557ba91c854baa885336",
       "sourceName": "contracts/StakingNFT.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -514,7 +514,7 @@
       ],
       "artifacts": [
         "IDegisNFT",
-        "IveDEG",
+        "IVeDEG",
         "NFTStaking"
       ]
     },
@@ -632,10 +632,10 @@
         "IERC20Metadata"
       ]
     },
-    "/home/liyang/code/Degis/Degis-NFT/contracts/MockDEG.sol": {
-      "lastModificationDate": 1653843417308,
+    "/home/liyang/code/Degis/Degis-NFT/contracts/mocks/MockDEG.sol": {
+      "lastModificationDate": 1654015395233,
       "contentHash": "4eb1e3dcd30ec3f2b13c16d9ebd0f418",
-      "sourceName": "contracts/MockDEG.sol",
+      "sourceName": "contracts/mocks/MockDEG.sol",
       "solcConfig": {
         "version": "0.8.13",
         "settings": {
@@ -668,6 +668,37 @@
       "artifacts": [
         "MockDEG"
       ]
+    },
+    "/home/liyang/code/Degis/Degis-NFT/contracts/mocks/MockVeDEG.sol": {
+      "lastModificationDate": 1654015400543,
+      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "sourceName": "contracts/mocks/MockVeDEG.sol",
+      "solcConfig": {
+        "version": "0.8.13",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
     }
   }
 }
