@@ -73,7 +73,7 @@ contract NFTStaking is Ownable, IERC721Receiver {
      * @param _address The public address of
      * @return The token Id of the staked NFT
      */
-    function ownerOf(address _address) public view returns (uint256) {
+    function tokenOwnedBy(address _address) public view returns (uint256) {
         require(champions[_address], "Address not found in champions map");
         return champions[_address];
     }
