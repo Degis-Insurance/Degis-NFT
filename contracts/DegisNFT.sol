@@ -1,11 +1,38 @@
 // SPDX-License-Identifier: UNLICENSED
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title  DegisNFT
+ * @notice This contract is for Degis NFT minting and management
+ * @dev    The token id starts from 1 rather than 0
+ *         There are 499 NFTs to be minted which increase veDEG generation by 1.2x.
+ *         The first 99 were allocated to community members and also have an increased boost of 1.5x.
+ *         Those 99 will be airdropped.
+ *         Then, through a priority sale, "allowlisted" wallets will be able to mint for X Degis.
+ *         The rest will be sold during public sale for X Degis.
+ */
 contract DegisNFT is ERC721, Ownable {
     enum Status {
         Init,
@@ -15,21 +42,38 @@ contract DegisNFT is ERC721, Ownable {
     }
     Status public status;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Amount of NFTs already minted
     uint256 public mintedAmount;
 
-    // wallet mapping that allows wallets to mint during airdrop and allowlist sale
+    // Wallet map for the allowlisted wallets
     mapping(address => bool) public allowlist;
+
+    // Wallet map for the airdrop wallets
     mapping(address => bool) public airdroplist;
-    // amount minted on public sale per wallet
+
+    // Amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
 
+    // Max supply of NFTs
     uint256 public constant maxMintSupply = 499;
+
+    //Public mint cost
     uint256 public constant mintPrice = 1 ether;
+
+    //Allowlist sale price
     uint256 public constant allowPrice = 0.5 ether;
+
+    //Max amount of NFTs that can be minted on public sale
     uint256 public constant maxPublicSale = 5;
+
+    //Max amount of NFTs that can be minted on allowlist sale
     uint256 public constant maxAllowlist = 3;
 
+    //NFT Collection URI
     string public baseURI;
 
     event StatusChange(Status oldStatus, Status newStatus);
@@ -39,10 +83,37 @@ contract DegisNFT is ERC721, Ownable {
         address receiver
     );
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     constructor() ERC721("DegisNFT", "DegisNFT") {
         status = Status.Init;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** View Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice   check if address is able to mint during allowlist sale phase
+     * @param _address address to check
+     */
+    function isAllowlist(address _wallet) external view returns (bool) {
+        return allowlist[_wallet];
+    }
+
+    /**
+     * @notice   check if address is able to claim airdrop during airdrop phase
+     * @param _address address to check
+     */
+    function isAirdrop(address _wallet) external view returns (bool) {
+        return airdroplist[_wallet];
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Set Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //   
     /**
      * @notice Change minting status
      * @param  _newStatus New minting status
@@ -60,14 +131,35 @@ contract DegisNFT is ERC721, Ownable {
         baseURI = baseURI_;
     }
 
-    /**
-     * @notice Owner minting
-     * @param  _quantity Amount of NFTs to mint
+        /**
+     * @notice   adds wallets to airdrop list
+     * @param  _addresses array of addresses to add to airdrop loop
      */
-    function ownerMint(uint256 _quantity) external onlyOwner {
-        _mint(msg.sender, _quantity);
-        mintedAmount += _quantity;
+    function addWalletsAirdrop(address[] calldata _addresses)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            airdroplist[_addresses[i]] = true;
+        }
     }
+
+    /**
+     * @notice   adds wallets to allowlist
+     * @param  _addresses array of addresses to add to airdrop loop
+     */
+    function addWalletsAllowlist(address[] calldata _addresses)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            allowlist[_addresses[i]] = true;
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Main Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Claimable NFTs
@@ -132,76 +224,9 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
-     * @notice   adds wallets to airdrop list
-     * @param  _addresses array of addresses to add to airdrop loop
+     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
+     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
      */
-    function addWalletsAirdrop(address[] calldata _addresses)
-        external
-        onlyOwner
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            airdroplist[_addresses[i]] = true;
-        }
-    }
-
-    /**
-     * @notice   adds wallets to allowlist
-     * @param  _addresses array of addresses to add to airdrop loop
-     */
-    function addWalletsAllowlist(address[] calldata _addresses)
-        external
-        onlyOwner
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            allowlist[_addresses[i]] = true;
-        }
-    }
-
-    /**
-     * @notice   withdraws funds to owner
-     */
-    function withdraw() external onlyOwner {
-        payable(msg.sender).transfer(address(this).balance);
-    }
-
-    /**
-     * @notice   withdraws specificed ERC20 and amount to owner
-      * @param  _token ERC20 to withdraw
-      * @param  _amount amount to withdraw
-     */
-    function withdrawERC20(address _token, uint256 _amount) external onlyOwner {
-        IERC20(_token).transfer(msg.sender, _amount);
-        emit WithdrawERC20(_token, _amount, msg.sender);
-    }
-
-    /**
-     * @notice   returns baseURI
-     */
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
-    /**
-     * @notice   mint multiple NFTs
-      * @param  _to address to send NFTs to
-      * @param  _amount amount to mint
-     */
-    function _mint(address _to, uint256 _amount) internal override {
-        for (uint256 i = 1; i <= _amount; i++) {
-            uint256 id = mintedAmount + i;
-            super._mint(_to, id);
-        }
-    }
-
-    //
-    function isAllowlist(address _wallet) external view returns (bool) {
-        return allowlist[_wallet];
-    }
-
-    function isAirdrop(address _wallet) external view returns (bool) {
-        return airdroplist[_wallet];
-    }
-
     function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
         require(index < balanceOf(owner), 'owner index out of bounds');
         uint256 tokenIdsIdx;
@@ -223,3 +248,45 @@ contract DegisNFT is ERC721, Ownable {
         revert("unable to get token of owner by index");
     }
 }
+
+    /**
+     * @notice Owner minting
+     * @param  _quantity Amount of NFTs to mint
+     */
+    function ownerMint(uint256 _quantity) external onlyOwner {
+        _mint(msg.sender, _quantity);
+        mintedAmount += _quantity;
+    }
+
+    /**
+     * @notice   withdraws specificed ERC20 and amount to owner
+      * @param  _token ERC20 to withdraw
+      * @param  _amount amount to withdraw
+     */
+    function withdrawERC20(address _token, uint256 _amount) external onlyOwner {
+        IERC20(_token).transfer(msg.sender, _amount);
+        emit WithdrawERC20(_token, _amount, msg.sender);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ********************************** Internal Functions ********************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice   mint multiple NFTs
+      * @param  _to address to send NFTs to
+      * @param  _amount amount to mint
+     */
+    function _mint(address _to, uint256 _amount) internal override {
+        for (uint256 i = 1; i <= _amount; i++) {
+            uint256 id = mintedAmount + i;
+            super._mint(_to, id);
+        }
+    }
+
+    /**
+     * @notice  returns baseURI
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
