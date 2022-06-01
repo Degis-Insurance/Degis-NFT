@@ -19,9 +19,9 @@ describe("Degis NFT Mint", function () {
         deg = await MockDEG.deploy();
 
         const DegisNFT = await ethers.getContractFactory("DegisNFT");
-        nft = await DegisNFT.deploy();
+        nft = await DegisNFT.deploy(deg.address);
 
-        await nft.setDEG(deg.address);
+        // await nft.setDEG(deg.address);
     })
 
 
@@ -323,9 +323,9 @@ describe("Degis NFT Mint", function () {
             await nft.connect(user2).publicSale(2);
             expect(await nft.mintedAmount()).to.equal(20);
 
-            await nft.ownerMint(480);
+            await nft.ownerMint(dev_account.address, 480);
 
-            await expect(nft.ownerMint(1)).to.be.revertedWith("Exceed max supply");
+            await expect(nft.ownerMint(dev_account.address, 1)).to.be.revertedWith("Exceed max supply");
             await expect(nft.connect(user2).publicSale(1)).to.be.revertedWith("Max mint supply reached");
 
             // Some extra test for uri

@@ -43,7 +43,7 @@ contract NFTStaking is Ownable, IERC721Receiver {
         degisNFT = IDegisNFT(_degisNFT);
     }
 
-    function setIveDEG(address _veDeg) external onlyOwner {
+    function setVeDEG(address _veDeg) external onlyOwner {
         veDEG = IVeDEG(_veDeg);
     }
 
@@ -57,16 +57,20 @@ contract NFTStaking is Ownable, IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
-    function stakeChampion(uint256 _tokenId) external {
+    function stake(uint256 _tokenId) external {
         require(degisNFT.ownerOf(_tokenId) == msg.sender, "not owner of token");
         require(_tokenId != 0, "tokenId cannot be 0");
-        // uint256 _multiplier = _tokenId <= 99 ? 15 : 12;
-        // veDEGContract.updateNFTMultiplier(msg.sender,_multiplier);
+
+        require(champions[msg.sender] == 0, "already staked");
+
         degisNFT.safeTransferFrom(msg.sender, address(this), _tokenId);
         champions[msg.sender] = _tokenId;
+
+        uint256 boostType = _tokenId > 99 ? 2 : 1;
+        veDEG.boostVeDEG(msg.sender, boostType);
     }
 
-    function withdrawChampion(uint256 _tokenId) external {
+    function withdraw(uint256 _tokenId) external {
         require(champions[msg.sender] == _tokenId, "not owner of token");
 
         // veDEGContract.updateNFTMultiplier(msg.sender, 10);

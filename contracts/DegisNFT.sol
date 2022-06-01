@@ -67,7 +67,9 @@ contract DegisNFT is ERC721, Ownable {
      *
      * @dev The initial status is Init (default as zero)
      */
-    constructor() ERC721("DegisNFT", "DegisNFT") {}
+    constructor(address _degis) ERC721("DegisNFT", "DegisNFT") {
+        DEG = _degis;
+    }
 
     /**
      * @notice Change minting status
@@ -108,9 +110,9 @@ contract DegisNFT is ERC721, Ownable {
      * @notice Owner minting
      * @param  _quantity Amount of NFTs to mint
      */
-    function ownerMint(uint256 _quantity) external onlyOwner {
+    function ownerMint(address _user, uint256 _quantity) external onlyOwner {
         require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
-        _mint(msg.sender, _quantity);
+        _mint(_user, _quantity);
     }
 
     /**

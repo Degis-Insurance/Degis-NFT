@@ -27,7 +27,7 @@ describe('airdropSale & allowlistSale', function () {
 
 
     const WhitelistSale = await ethers.getContractFactory('DegisNFT');
-    whitelistSale = await WhitelistSale.deploy();
+    whitelistSale = await WhitelistSale.deploy(deg.address);
 
     await whitelistSale.setDEG(deg.address);
 
