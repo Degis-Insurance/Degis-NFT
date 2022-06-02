@@ -119,25 +119,6 @@ contract DegisNFT is ERC721, Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice   check if address is able to mint during allowlist sale phase
-     * @param _address address to check
-     */
-    function isAllowlist(address _wallet) external view returns (bool) {
-        return allowlist[_wallet];
-    }
-
-    /**
-     * @notice   check if address is able to claim airdrop during airdrop phase
-     * @param _address address to check
-     */
-    function isAirdrop(address _wallet) external view returns (bool) {
-        return airdroplist[_wallet];
-    }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Set Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //   
-    /**
      * @notice Check if the address is inside allow list
      *
      * @param _user        The user address to check
@@ -178,6 +159,36 @@ contract DegisNFT is ERC721, Ownable {
                 keccak256(abi.encodePacked(_user))
             );
     }
+
+    /**
+     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
+     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
+     */
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
+        require(index < balanceOf(owner), 'owner index out of bounds');
+        uint256 tokenIdsIdx;
+        address currOwnershipAddr;
+        unchecked {
+            for (uint256 i = 1; i <= mintedAmount; i++) {
+                address ownership = ownerOf(i);
+                if (ownership != address(0)) {
+                    currOwnershipAddr = ownership;
+                }
+                if (currOwnershipAddr == owner) {
+                    if (tokenIdsIdx == index) {
+                        return i;
+                    }
+                    tokenIdsIdx++;
+                }
+            }
+        }
+        revert("unable to get token of owner by index");
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Set Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //   
+    
 
     /**
      * @notice Change minting status
@@ -229,30 +240,6 @@ contract DegisNFT is ERC721, Ownable {
      */
     function setAllowlistMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
         allowlistMerkleRoot = _merkleRoot;
-    }
-
-        /**
-     * @notice   adds wallets to airdrop list
-     * @param  _addresses array of addresses to add to airdrop loop
-     */
-    function addWalletsAirdrop(address[] calldata _addresses)
-        external
-        onlyOwner
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            airdroplist[_addresses[i]] = true;
-        }
-    }
-
-    /**
-     * @notice Owner minting
-     *
-     * @param _user     User address to mint
-     * @param _quantity Amount of NFTs to mint
-     */
-    function ownerMint(address _user, uint256 _quantity) external onlyOwner {
-        require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
-        _mint(_user, _quantity);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -350,31 +337,6 @@ contract DegisNFT is ERC721, Ownable {
 
         emit PublicSale(msg.sender, _quantity, mintedAmount);
     }
-    /**
-     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
-     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
-     */
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
-        require(index < balanceOf(owner), 'owner index out of bounds');
-        uint256 tokenIdsIdx;
-        address currOwnershipAddr;
-        unchecked {
-            for (uint256 i = 1; i <= mintedAmount; i++) {
-                address ownership = ownerOf(i);
-                if (ownership != address(0)) {
-                    currOwnershipAddr = ownership;
-                }
-                if (currOwnershipAddr == owner) {
-                    if (tokenIdsIdx == index) {
-                        return i;
-                    }
-                    tokenIdsIdx++;
-                }
-            }
-        }
-        revert("unable to get token of owner by index");
-    }
-
 
     /**
      * @notice Owner minting
@@ -420,25 +382,5 @@ contract DegisNFT is ERC721, Ownable {
         unchecked {
             mintedAmount += _amount;
         }
-    }
-
-    /**
-     * @notice Checks if a given address is in the allowlist
-     *
-     * @param  _wallet wallet to verify   
-     * @param  _merkleProof verification signature
-     */
-    function isAllowlist(address _wallet, bytes32[] calldata _merkleProof) external view returns (bool) {
-        return MerkleProof.verify(_merkleProof, allowlistMerkleRoot, keccak256(abi.encodePacked(_wallet)));
-    }
-
-    /**
-     * @notice Checks if a given address is in the airdrop
-     *
-     * @param  _wallet wallet to verify   
-     * @param  _merkleProof verification signature
-     */
-    function isAirdrop(address _wallet, bytes32[] calldata _merkleProof) external view returns (bool) {
-        return MerkleProof.verify(_merkleProof, airdropMerkleRoot, keccak256(abi.encodePacked(_wallet)));
     }
 }
