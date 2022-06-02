@@ -1,24 +1,11 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-interface IDegisNFT {
-    function ownerOf(uint256 tokenId) external view returns (address);
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-}
-
-interface IVeDEG {
-    function boostVeDEG(address _address, uint256 _multiplier) external;
-
-    function unBoostVeDEG(address _address) external;
-}
+import {IDegisNFT} from "./interfaces/IDegisNFT.sol";
+import {IVeDEG} from "./interfaces/IVeDEG.sol";
 
 contract NFTStaking is Ownable, IERC721Receiver {
     IDegisNFT public degisNFT;
@@ -39,14 +26,27 @@ contract NFTStaking is Ownable, IERC721Receiver {
         veDEG = IVeDEG(_veDEG);
     }
 
+    /**
+     * @notice Set degis nft contract
+     *
+     * @param _degisNFT Degis nft address
+     */
     function setDegisNFTContract(address _degisNFT) external onlyOwner {
         degisNFT = IDegisNFT(_degisNFT);
     }
 
-    function setVeDEG(address _veDeg) external onlyOwner {
-        veDEG = IVeDEG(_veDeg);
+    /**
+     * @notice Set veDEG contract
+     *
+     * @param _veDEG VeDEG address
+     */
+    function setVeDEG(address _veDEG) external onlyOwner {
+        veDEG = IVeDEG(_veDEG);
     }
 
+    /**
+     * @notice Selector for receiving ERC721 tokens
+     */
     function onERC721Received(
         address operator,
         address from,
@@ -57,6 +57,11 @@ contract NFTStaking is Ownable, IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
+    /**
+     * @notice Stake NFT
+     *
+     * @param _tokenId Token id to stake
+     */
     function stake(uint256 _tokenId) external {
         require(degisNFT.ownerOf(_tokenId) == msg.sender, "not owner of token");
         require(_tokenId != 0, "tokenId cannot be 0");
@@ -70,6 +75,11 @@ contract NFTStaking is Ownable, IERC721Receiver {
         veDEG.boostVeDEG(msg.sender, boostType);
     }
 
+    /**
+     * @notice Withdraw NFT
+     *
+     * @param _tokenId Token id to withdraw
+     */
     function withdraw(uint256 _tokenId) external {
         require(champions[msg.sender] == _tokenId, "not owner of token");
 

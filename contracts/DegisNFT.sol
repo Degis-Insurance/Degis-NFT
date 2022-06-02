@@ -72,6 +72,48 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
+     * @notice Check if the address is inside allow list
+     *
+     * @param _user        The user address to check
+     * @param _merkleProof Merkle proof
+     *
+     * @return isAllowlist Whether it is inside allowlist
+     */
+    function isAllowlist(address _user, bytes32[] calldata _merkleProof)
+        external
+        view
+        returns (bool)
+    {
+        return
+            MerkleProof.verify(
+                _merkleProof,
+                allowlistMerkleRoot,
+                keccak256(abi.encodePacked(_user))
+            );
+    }
+
+    /**
+     * @notice Check if the address is inside airdrop list
+     *
+     * @param _user        The user address to check
+     * @param _merkleProof Merkle proof
+     *
+     * @return isAirdrop   Whether it is inside airdrop
+     */
+    function isAirdrop(address _user, bytes32[] calldata _merkleProof)
+        external
+        view
+        returns (bool)
+    {
+        return
+            MerkleProof.verify(
+                _merkleProof,
+                airdropMerkleRoot,
+                keccak256(abi.encodePacked(_user))
+            );
+    }
+
+    /**
      * @notice Change minting status
      *
      * @dev Only by the owner
@@ -83,6 +125,13 @@ contract DegisNFT is ERC721, Ownable {
         status = _newStatus;
     }
 
+    /**
+     * @notice Set degis token address
+     *
+     * @dev Only by the owner
+     *
+     * @param _deg Degis address
+     */
     function setDEG(address _deg) external onlyOwner {
         require(_deg != address(0), "Zero address");
         DEG = _deg;
@@ -98,17 +147,29 @@ contract DegisNFT is ERC721, Ownable {
         emit SetBaseURI(baseURI_);
     }
 
+    /**
+     * @notice Set the airdrop merkle root
+     *
+     * @param _merkleRoot Merkle root for airdrop list
+     */
     function setAirdropMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
         airdropMerkleRoot = _merkleRoot;
     }
 
+    /**
+     * @notice Set the allow list root
+     *
+     * @param _merkleRoot Merkle root for allowlist
+     */
     function setAllowlistMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
         allowlistMerkleRoot = _merkleRoot;
     }
 
     /**
      * @notice Owner minting
-     * @param  _quantity Amount of NFTs to mint
+     *
+     * @param _user     User address to mint
+     * @param _quantity Amount of NFTs to mint
      */
     function ownerMint(address _user, uint256 _quantity) external onlyOwner {
         require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
@@ -116,9 +177,10 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
-     * @notice Claimable NFTs
+     * @notice Airdrop claim
+     *
+     * @param _merkleProof Merkle proof for airdrop
      */
-
     function airdropClaim(bytes32[] calldata _merkleProof) external {
         require(status == STATUS_AIRDROP, "Not in airdrop phase");
         require(!airdroplistClaimed[msg.sender], "already claimed");
@@ -139,9 +201,10 @@ contract DegisNFT is ERC721, Ownable {
 
     /**
      * @notice Allowlist minting
-     * @param  _quantity amount of NFTs to mint
+     *
+     * @param _quantity    Amount of NFTs to mint
+     * @param _merkleProof Merkle proof for this user
      */
-
     function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof)
         external
         payable
@@ -170,8 +233,11 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
-     * @notice  public sale mint. Allowed to mint several times as long as total per wallet is bellow maxPublicSale
-     * @param  _quantity amount of NFTs to mint
+     * @notice Public sale mint
+     *
+     * @dev Allowed to mint several times as long as total per wallet is bellow maxPublicSale
+     *
+     * @param _quantity Amount of NFTs to mint
      */
     function publicSale(uint256 _quantity) external payable {
         require(status == STATUS_PUBLICSALE, "Not in public sale phase");
