@@ -38,6 +38,10 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 contract DegisNFT is ERC721, Ownable {
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+    
     // Status defined as constants rather than enum
     uint256 public constant STATUS_INIT = 0;
     uint256 public constant STATUS_AIRDROP = 1;
@@ -64,10 +68,6 @@ contract DegisNFT is ERC721, Ownable {
     // Current status of minting
     uint256 public status;
 
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
     // Amount of NFTs already minted
     // Current tokenId
     uint256 public mintedAmount;
@@ -89,6 +89,10 @@ contract DegisNFT is ERC721, Ownable {
 
     // Merkle root of allowlist
     bytes32 public allowlistMerkleRoot;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event StatusChange(uint256 oldStatus, uint256 newStatus);
     event SetBaseURI(string baseUri);
@@ -352,10 +356,22 @@ contract DegisNFT is ERC721, Ownable {
         }
     }
 
+    /**
+     * @notice Checks if a given address is in the allowlist
+     *
+     * @param  _wallet wallet to verify   
+     * @param  _merkleProof verification signature
+     */
     function isAllowlist(address _wallet, bytes32[] calldata _merkleProof) external view returns (bool) {
         return MerkleProof.verify(_merkleProof, allowlistMerkleRoot, keccak256(abi.encodePacked(_wallet)));
     }
 
+    /**
+     * @notice Checks if a given address is in the airdrop
+     *
+     * @param  _wallet wallet to verify   
+     * @param  _merkleProof verification signature
+     */
     function isAirdrop(address _wallet, bytes32[] calldata _merkleProof) external view returns (bool) {
         return MerkleProof.verify(_merkleProof, airdropMerkleRoot, keccak256(abi.encodePacked(_wallet)));
     }
