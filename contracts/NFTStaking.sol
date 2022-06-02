@@ -22,21 +22,8 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-interface IDegisNFT {
-    function ownerOf(uint256 tokenId) external view returns (address);
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-}
-
-interface IVeDEG {
-    function boostVeDEG(address _address, uint256 _multiplier) external;
-
-    function unBoostVeDEG(address _address) external;
-}
+import {IDegisNFT} from "./interfaces/IDegisNFT.sol";
+import {IVeDEG} from "./interfaces/IVeDEG.sol";
 
 /**
  * @title  NFTStaking
@@ -103,13 +90,14 @@ contract NFTStaking is Ownable, IERC721Receiver {
         degisNFT = IDegisNFT(_degisNFT);
     }
 
-    /**
-     * @dev Set the address of the Degis NFT contract to interact with.
-     * @param _veDeg address of the veDEG contract
+     /* @notice Set veDEG contract
+     *
+     * @param _veDEG VeDEG address
      */
-    function setVeDEG(address _veDeg) external onlyOwner {
-        veDEG = IVeDEG(_veDeg);
+    function setVeDEG(address _veDEG) external onlyOwner {
+        veDEG = IVeDEG(_veDEG);
     }
+
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Main Functions ************************************* //
