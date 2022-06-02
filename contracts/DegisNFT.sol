@@ -1,4 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -7,6 +25,16 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
+/**
+ * @title  DegisNFT
+ * @notice This contract is for Degis NFT minting and management
+ * @dev    The token id starts from 1 rather than 0
+ *         There are 499 NFTs to be minted which increase veDEG generation by 1.2x.
+ *         The first 99 were allocated to community members and also have an increased boost of 1.5x.
+ *         Those 99 will be airdropped.
+ *         Then, through a priority sale, "allowlisted" wallets will be able to mint for X Degis.
+ *         The rest will be sold during public sale for X Degis.
+ */
 contract DegisNFT is ERC721, Ownable {
     using SafeERC20 for IERC20;
 
@@ -24,25 +52,36 @@ contract DegisNFT is ERC721, Ownable {
 
     // Public sale price is 200 DEG
     uint256 public constant PRICE_PUBLICSALE = 200 ether;
+    // Allowlist sale price is 100 DEG
     uint256 public constant PRICE_ALLOWLIST = 100 ether;
 
+    //Max amount of NFTs that can be minted on public sale
     uint256 public constant MAXAMOUNT_PUBLICSALE = 5;
+
+    //Max amount of NFTs that can be minted on allowlist sale
     uint256 public constant MAXAMOUNT_ALLOWLIST = 3;
 
     // Current status of minting
     uint256 public status;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Amount of NFTs already minted
     // Current tokenId
     uint256 public mintedAmount;
 
-    // wallet mapping that allows wallets to mint during airdrop and allowlist sale
-    mapping(address => bool) public allowlistMinted;
-    mapping(address => bool) public airdroplistClaimed;
+    // Wallet map for the allowlisted wallets
+    mapping(address => bool) public allowlist;
 
-    // amount minted on public sale per wallet
+    // Wallet map for the airdrop wallets
+    mapping(address => bool) public airdroplist;
+
+    // Amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
 
+    //NFT Collection URI
     string public baseURI;
 
     // Merkle root of airdrop list
@@ -71,6 +110,29 @@ contract DegisNFT is ERC721, Ownable {
         DEG = _degis;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** View Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice   check if address is able to mint during allowlist sale phase
+     * @param _address address to check
+     */
+    function isAllowlist(address _wallet) external view returns (bool) {
+        return allowlist[_wallet];
+    }
+
+    /**
+     * @notice   check if address is able to claim airdrop during airdrop phase
+     * @param _address address to check
+     */
+    function isAirdrop(address _wallet) external view returns (bool) {
+        return airdroplist[_wallet];
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Set Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //   
     /**
      * @notice Change minting status
      *
@@ -106,14 +168,31 @@ contract DegisNFT is ERC721, Ownable {
         allowlistMerkleRoot = _merkleRoot;
     }
 
+        /**
+     * @notice   adds wallets to airdrop list
+     * @param  _addresses array of addresses to add to airdrop loop
+     */
+    function addWalletsAirdrop(address[] calldata _addresses)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            airdroplist[_addresses[i]] = true;
+        }
+    }
+
     /**
-     * @notice Owner minting
-     * @param  _quantity Amount of NFTs to mint
+     * @notice   adds wallets to allowlist
+     * @param  _addresses array of addresses to add to airdrop loop
      */
     function ownerMint(address _user, uint256 _quantity) external onlyOwner {
         require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
         _mint(_user, _quantity);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Main Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Claimable NFTs
@@ -201,12 +280,39 @@ contract DegisNFT is ERC721, Ownable {
 
         emit PublicSale(msg.sender, _quantity, mintedAmount);
     }
+    /**
+     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
+     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
+     */
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
+        require(index < balanceOf(owner), 'owner index out of bounds');
+        uint256 tokenIdsIdx;
+        address currOwnershipAddr;
+        unchecked {
+            for (uint256 i = 1; i <= mintedAmount; i++) {
+                address ownership = ownerOf(i);
+                if (ownership != address(0)) {
+                    currOwnershipAddr = ownership;
+                }
+                if (currOwnershipAddr == owner) {
+                    if (tokenIdsIdx == index) {
+                        return i;
+                    }
+                    tokenIdsIdx++;
+                }
+            }
+        }
+        revert("unable to get token of owner by index");
+    }
+
 
     /**
-     * @notice Withdraw avax by the owner
+     * @notice Owner minting
+     * @param  _quantity Amount of NFTs to mint
      */
-    function withdraw() external onlyOwner {
-        payable(msg.sender).transfer(address(this).balance);
+    function ownerMint(uint256 _quantity) external onlyOwner {
+        _mint(msg.sender, _quantity);
+        mintedAmount += _quantity;
     }
 
     /**
@@ -220,12 +326,9 @@ contract DegisNFT is ERC721, Ownable {
         emit WithdrawERC20(_token, _amount, msg.sender);
     }
 
-    /**
-     * @notice BaseURI
-     */
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ********************************** Internal Functions ********************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Mint multiple NFTs

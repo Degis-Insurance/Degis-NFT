@@ -23,23 +23,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 interface IDegisNFT {
-    function ownerOf(uint256 tokenId) external view returns (address);
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
+    function ownerOf (uint256 tokenId) external view returns (address);
+    function safeTransferFrom (address from, address to, uint256 tokenId) external;
 }
 
-interface IVeDEG {
-    function boostVeDEG(address _address, uint256 _multiplier) external;
-
-    function unBoostVeDEG(address _address) external;
+interface IveDEG {
+    function updateNFTMultiplier(address _address, uint256 _multiplier) external;
 }
 
 /**
- * @title  NFTStaking
+ * @title  StakingNFT
  * @notice This contract is for NFT staking on Degis
  * @dev    staked warriors are granted boosted veDEG emission by updating veDEG contract multiplier.
  *         It interacts with Degis NFTs only.
@@ -55,27 +48,21 @@ contract NFTStaking is Ownable, IERC721Receiver {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    IDegisNFT public degisNFT;
-    IVeDEG public veDEG;
+    // degis NFT contract to receive from owner
+    IDegisNFT public degisNFTContract;
 
+    // veDEG contract to updateNFTMultiplier
+    IveDEG public veDEGContract;
+
+    // addresses to staked warriors map
     mapping(address => uint256) public champions;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event championReceived(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes data
-    );
+    event championReceived(address operator,address from,uint256 tokenId, bytes data);
     event championWithdrawn(uint256 tokenId, address to);
-
-    constructor(address _degisNFT, address _veDEG) {
-        degisNFT = IDegisNFT(_degisNFT);
-        veDEG = IVeDEG(_veDEG);
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** View Functions ************************************* //
@@ -84,9 +71,9 @@ contract NFTStaking is Ownable, IERC721Receiver {
     /**
      * @dev Returns the token ID given an address.
      * @param _address The public address of
-     * @return tokenId of the staked NFT
+     * @return The token Id of the staked NFT
      */
-    function tokenStakedBy(address _address) public view returns (uint256) {
+    function tokenOwnedBy(address _address) public view returns (uint256) {
         require(champions[_address], "Address not found in champions map");
         return champions[_address];
     }
@@ -99,16 +86,16 @@ contract NFTStaking is Ownable, IERC721Receiver {
      * @dev Set the address of the Degis NFT contract to interact with.
      * @param _degsNFT address of the Degis NFT contract
      */
-    function setDegisNFTContract(address _degisNFT) external onlyOwner {
-        degisNFT = IDegisNFT(_degisNFT);
+    function setDegisNFTContract (address _degisNFT) external onlyOwner {
+        degisNFTContract = IDegisNFT(_degisNFT);
     }
 
     /**
      * @dev Set the address of the Degis NFT contract to interact with.
      * @param _veDeg address of the veDEG contract
      */
-    function setVeDEG(address _veDeg) external onlyOwner {
-        veDEG = IVeDEG(_veDeg);
+    function setIveDEG (address _veDeg) external onlyOwner {
+        veDEGContract = IveDEG(_veDeg);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -119,35 +106,28 @@ contract NFTStaking is Ownable, IERC721Receiver {
      * @dev Stake a NFT. Only the owner can stake a NFT.
      * @param _tokenId ID of token to stake
      */
-    function stake(uint256 _tokenId) external {
-        require(degisNFT.ownerOf(_tokenId) == msg.sender, "not owner of token");
+    function stakeChampion(uint256 _tokenId) external {
+        require(degisNFTContract.ownerOf(_tokenId) != address(0), "token not owned");
+        require(degisNFTContract.ownerOf(_tokenId) == msg.sender, "not owner of token");
         require(_tokenId != 0, "tokenId cannot be 0");
-
-        require(champions[msg.sender] == 0, "already staked");
-
-        degisNFT.safeTransferFrom(msg.sender, address(this), _tokenId);
+        // uint256 _multiplier = _tokenId <= 99 ? 15 : 12;
+        // veDEGContract.updateNFTMultiplier(msg.sender,_multiplier);
+        degisNFTContract.safeTransferFrom(msg.sender, address(this), _tokenId);
         champions[msg.sender] = _tokenId;
-
-        uint256 boostType = _tokenId > 99 ? 2 : 1;
-        veDEG.boostVeDEG(msg.sender, boostType);
     }
 
     /**
      * @dev Unstake a NFT. Only the owner can unstake a NFT.
      * @param _tokenId ID of token to unstake
      */
-    function withdraw(uint256 _tokenId) external {
+    function withdrawChampion(uint256 _tokenId) external {
         require(champions[msg.sender] == _tokenId, "not owner of token");
-
         // veDEGContract.updateNFTMultiplier(msg.sender, 10);
-        degisNFT.safeTransferFrom(address(this), msg.sender, _tokenId);
+        degisNFTContract.safeTransferFrom(address(this), msg.sender, _tokenId);
         champions[msg.sender] = 0;
-
-        // Unboost
-        veDEG.unBoostVeDEG(msg.sender);
-
         emit championWithdrawn(_tokenId, msg.sender);
     }
+}
 
     /**
      * @dev Required implementation by IERC721Receiver. Called once a token is received.
@@ -161,8 +141,8 @@ contract NFTStaking is Ownable, IERC721Receiver {
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external override returns (bytes4) {
-        emit championReceived(operator, from, tokenId, data);
+        )
+        external override returns(bytes4){
         return this.onERC721Received.selector;
+        emit championReceived(operator, from, tokenId, data);
     }
-}
