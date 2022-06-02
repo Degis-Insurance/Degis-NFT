@@ -72,11 +72,11 @@ contract DegisNFT is ERC721, Ownable {
     // Current tokenId
     uint256 public mintedAmount;
 
-    // Wallet map for the allowlisted wallets
-    mapping(address => bool) public allowlist;
+    // maps if address already took part in allowlist sale
+    mapping(address => bool) public allowlistMinted;
 
-    // Wallet map for the airdrop wallets
-    mapping(address => bool) public airdroplist;
+    // maps if address already took part in airdrop claim
+    mapping(address => bool) public airdroplistClaimed;
 
     // Amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
