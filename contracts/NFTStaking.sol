@@ -74,7 +74,7 @@ contract NFTStaking is Ownable, IERC721Receiver {
      * @return tokenId of the staked NFT
      */
     function tokenStakedBy(address _address) public view returns (uint256) {
-        require(champions[_address], "Address not found in champions map");
+        require(champions[_address] != 0, "Address not found in champions map");
         return champions[_address];
     }
 
@@ -84,7 +84,7 @@ contract NFTStaking is Ownable, IERC721Receiver {
 
     /**
      * @dev Set the address of the Degis NFT contract to interact with.
-     * @param _degsNFT address of the Degis NFT contract
+     * @param _degisNFT address of the Degis NFT contract
      */
     function setDegisNFTContract(address _degisNFT) external onlyOwner {
         degisNFT = IDegisNFT(_degisNFT);
@@ -139,10 +139,10 @@ contract NFTStaking is Ownable, IERC721Receiver {
 
     /**
      * @dev Required implementation by IERC721Receiver. Called once a token is received.
-     * @param _operator This contract address
-     * @param _from message sender
-     * @param _tokenId ID of token received
-     * @param _data additional data
+     * @param operator This contract address
+     * @param from message sender
+     * @param tokenId ID of token received
+     * @param data additional data
      */
     function onERC721Received(
         address operator,
