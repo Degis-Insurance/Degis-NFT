@@ -19,7 +19,9 @@ contract NFTStaking is Ownable, IERC721Receiver {
         uint256 tokenId,
         bytes data
     );
-    event championWithdrawn(uint256 tokenId, address to);
+
+    event Stake(address user, uint256 tokenId, uint256 boostType);
+    event Unstake(address user, uint256 tokenId);
 
     constructor(address _degisNFT, address _veDEG) {
         degisNFT = IDegisNFT(_degisNFT);
@@ -68,11 +70,15 @@ contract NFTStaking is Ownable, IERC721Receiver {
 
         require(champions[msg.sender] == 0, "already staked");
 
+        degisNFT.approve(address(this), _tokenId);
+
         degisNFT.safeTransferFrom(msg.sender, address(this), _tokenId);
         champions[msg.sender] = _tokenId;
 
         uint256 boostType = _tokenId > 99 ? 2 : 1;
         veDEG.boostVeDEG(msg.sender, boostType);
+
+        emit Stake(msg.sender, _tokenId, boostType);
     }
 
     /**
@@ -90,6 +96,6 @@ contract NFTStaking is Ownable, IERC721Receiver {
         // Unboost
         veDEG.unBoostVeDEG(msg.sender);
 
-        emit championWithdrawn(_tokenId, msg.sender);
+        emit Unstake(msg.sender, _tokenId);
     }
 }

@@ -749,8 +749,8 @@
       ]
     },
     "/home/liyang/code/Degis/Degis-NFT/contracts/mocks/MockVeDEG.sol": {
-      "lastModificationDate": 1654015400543,
-      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "lastModificationDate": 1654428413423,
+      "contentHash": "66517dcc02ab26245a27712b539cf923",
       "sourceName": "contracts/mocks/MockVeDEG.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -782,13 +782,19 @@
           }
         }
       },
-      "imports": [],
-      "versionPragmas": [],
-      "artifacts": []
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.13"
+      ],
+      "artifacts": [
+        "MockVeDEG"
+      ]
     },
     "/home/liyang/code/Degis/Degis-NFT/contracts/NFTStaking.sol": {
-      "lastModificationDate": 1654139561037,
-      "contentHash": "2abd85fa6a223ee35cdc10eea5e7ccbc",
+      "lastModificationDate": 1654428794993,
+      "contentHash": "82791dec889f78ac5633783d397da282",
       "sourceName": "contracts/NFTStaking.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -834,8 +840,8 @@
       ]
     },
     "/home/liyang/code/Degis/Degis-NFT/contracts/interfaces/IDegisNFT.sol": {
-      "lastModificationDate": 1654139360077,
-      "contentHash": "f6da2c6cfaa847c6e8c33097f90d0b4c",
+      "lastModificationDate": 1654428643983,
+      "contentHash": "c883bff439bf63d41f2b1fe5d5e3c8c7",
       "sourceName": "contracts/interfaces/IDegisNFT.sol",
       "solcConfig": {
         "version": "0.8.13",

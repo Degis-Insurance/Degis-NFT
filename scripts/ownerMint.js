@@ -20,17 +20,26 @@ async function main() {
   const nftAddress = addressList[network.name].DegisNFT;
   console.log("NFT Address:", nftAddress);
 
-  // We get the contract to deploy
+  // We get the contract to deploy 
   const DegisNFT = await hre.ethers.getContractFactory("DegisNFT");
   const nft = DegisNFT.attach(nftAddress);
 
-  const receiver = "0xF84eb208b432bACBC417F109E929F432b64ffd7E";
+  const receiver = "0xA10f8ecb4d91Ae5CA3291d0bFF159bd5F882A5f5";
 
-  const tx = await nft.ownerMint(receiver, 10);
+  // const tx = await nft.ownerMint(receiver, 10);
+  // console.log("tx details:", await tx.wait());
+
+  const tx = await nft.setBaseURI("https://degis.io/NFT_Images/");
   console.log("tx details:", await tx.wait());
 
   const balance = await nft.balanceOf(receiver);
   console.log("current balance:", balance)
+
+  // const nftStaking = await hre.ethers.getContractFactory("NFTStaking");
+  // const staking = nftStaking.attach(addressList[network.name].NFTStaking);
+
+  // const tx = await staking.setDegisNFTContract(nftAddress);
+  // console.log("tx details:", await tx.wait());
 }
 
 // We recommend this pattern to be able to use async/await everywhere

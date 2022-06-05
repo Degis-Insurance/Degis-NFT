@@ -12,17 +12,17 @@ module.exports = async ({
 
     const addressList = readAddressList();
 
-    const degisAddress = addressList[network.name].DegisToken;
+    const nftAddress = addressList[network.name].DegisNFT;
     const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
-    console.log("deg:", degisAddress);
+    console.log("nft:", nftAddress);
     console.log("veDEG:", veDEGAddress);
 
     // Proxy Admin contract artifact
     const nftStaking = await deploy("NFTStaking", {
         contract: "NFTStaking",
         from: deployer,
-        args: [degisAddress, veDEGAddress],
+        args: [nftAddress, veDEGAddress],
         log: true,
     });
     addressList[network.name].NFTStaking = nftStaking.address;

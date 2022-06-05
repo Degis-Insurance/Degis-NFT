@@ -9,4 +9,6 @@ interface IDegisNFT {
         address to,
         uint256 tokenId
     ) external;
+
+    function approve(address _target, uint256 _tokenId) external;
 }
