@@ -28,7 +28,7 @@ describe("Degis NFT Mint", function () {
     describe("Deployments", function () {
         it("should have the correct prices", async function () {
             expect(await nft.PRICE_PUBLICSALE()).to.equal(parseUnits("200", 18));
-            expect(await nft.PRICE_ALLOWLIST()).to.equal(parseUnits("100"), 18);
+            expect(await nft.PRICE_ALLOWLIST()).to.equal(parseUnits("200"), 18);
         });
 
         it("should have the correct total supply", async function () {
@@ -36,8 +36,8 @@ describe("Degis NFT Mint", function () {
         });
 
         it("should have the correct amounts", async function () {
-            expect(await nft.MAXAMOUNT_PUBLICSALE()).to.equal(5);
-            expect(await nft.MAXAMOUNT_ALLOWLIST()).to.equal(3);
+            expect(await nft.MAXAMOUNT_PUBLICSALE()).to.equal(10);
+            // expect(await nft.MAXAMOUNT_ALLOWLIST()).to.equal(3);
         });
 
         it("should have the correct init status", async function () {
@@ -84,7 +84,7 @@ describe("Degis NFT Mint", function () {
 
         it("should not be able to claim before setting status", async function () {
             await expect(nft.airdropClaim(proof_airdrop)).to.be.rejectedWith('Not in airdrop phase');
-            await expect(nft.allowlistSale(1, proof_allowlist)).to.be.rejectedWith("Not in allowlist sale phase")
+            await expect(nft.allowlistSale(proof_allowlist)).to.be.rejectedWith("Not in allowlist sale phase")
         });
 
         it("should not be able to claim by wrong proofs", async function () {
@@ -126,11 +126,11 @@ describe("Degis NFT Mint", function () {
             await nft.setStatus(2);
 
             // No allowance
-            await expect(nft.connect(user3).allowlistSale(1, proof_allowlist)).to.be.rejectedWith("ERC20: insufficient allowance");
+            await expect(nft.connect(user3).allowlistSale(proof_allowlist)).to.be.rejectedWith("ERC20: insufficient allowance");
 
             // No balance
             await deg.connect(user3).approve(nft.address, parseUnits("1000"));
-            await expect(nft.connect(user3).allowlistSale(1, proof_allowlist)).to.be.rejectedWith("ERC20: transfer amount exceeds balance");
+            await expect(nft.connect(user3).allowlistSale( proof_allowlist)).to.be.rejectedWith("ERC20: transfer amount exceeds balance");
         })
 
         it("should be able to participate in allowlist sale", async function () {
@@ -139,7 +139,7 @@ describe("Degis NFT Mint", function () {
             await deg.mint(user3.address, parseUnits("1000"));
             await deg.connect(user3).approve(nft.address, parseUnits("1000"));
 
-            await expect(nft.connect(user3).allowlistSale(1, proof_allowlist)).to.emit(nft, "AllowlistSale").withArgs(user3.address, 1, 1);
+            await expect(nft.connect(user3).allowlistSale(proof_allowlist)).to.emit(nft, "AllowlistSale").withArgs(user3.address, 1, 1);
 
             // Check status
             expect(await nft.mintedAmount()).to.equal(1);
@@ -149,8 +149,8 @@ describe("Degis NFT Mint", function () {
             expect(await nft.ownerOf(1)).to.equal(user3.address);
 
             // Spend 100 deg for minting
-            expect(await deg.balanceOf(user3.address)).to.equal(parseUnits("900"));
-            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("100"));
+            expect(await deg.balanceOf(user3.address)).to.equal(parseUnits("800"));
+            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("200"));
 
 
             // Temporarily use a new proof
@@ -160,23 +160,23 @@ describe("Degis NFT Mint", function () {
 
             const allowlist = [user3, user4];
             proof_allowlist = tree_allowlist.getHexProof(keccak256(allowlist[1].address))
-            await expect(nft.connect(user4).allowlistSale(1, proof_allowlist)).to.emit(nft, "AllowlistSale").withArgs(user4.address, 1, 2);
+            await expect(nft.connect(user4).allowlistSale(proof_allowlist)).to.emit(nft, "AllowlistSale").withArgs(user4.address, 1, 2);
 
 
             // Spend 100 deg for minting
-            expect(await deg.balanceOf(user4.address)).to.equal(parseUnits("900"));
-            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("200"));
+            expect(await deg.balanceOf(user4.address)).to.equal(parseUnits("800"));
+            expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("400"));
 
         })
     })
 
     describe("Public Sale", function () {
         beforeEach(async function () {
-            await deg.mint(dev_account.address, parseUnits("1000"));
-            await deg.mint(user1.address, parseUnits("1000"));
+            await deg.mint(dev_account.address, parseUnits("10000"));
+            await deg.mint(user1.address, parseUnits("10000"));
 
-            await deg.approve(nft.address, parseUnits("1000"));
-            await deg.connect(user1).approve(nft.address, parseUnits("1000"));
+            await deg.approve(nft.address, parseUnits("10000"));
+            await deg.connect(user1).approve(nft.address, parseUnits("10000"));
         })
 
         it("should not be able to public sale before setting status", async function () {
@@ -192,10 +192,10 @@ describe("Degis NFT Mint", function () {
         it("should not be able to mint more than the maxAmount", async function () {
             await nft.setStatus(3);
 
-            await expect(nft.publicSale(6)).to.be.revertedWith("Max public sale amount reached");
+            await expect(nft.publicSale(11)).to.be.revertedWith("Max public sale amount reached");
 
             await nft.publicSale(1);
-            await expect(nft.publicSale(5)).to.be.revertedWith("Max public sale amount reached");
+            await expect(nft.publicSale(10)).to.be.revertedWith("Max public sale amount reached");
         })
 
         it("should be able to participate in public sale", async function () {
@@ -207,7 +207,7 @@ describe("Degis NFT Mint", function () {
             await expect(nft.publicSale(2)).to.emit(nft, "PublicSale").withArgs(dev_account.address, 2, 3);
 
             // Deg balance check
-            expect(await deg.balanceOf(dev_account.address)).to.equal(parseUnits("400"));
+            expect(await deg.balanceOf(dev_account.address)).to.equal(parseUnits("9400"));
             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("600"));
 
             // Nft check
@@ -222,7 +222,7 @@ describe("Degis NFT Mint", function () {
             await expect(nft.connect(user1).publicSale(1)).to.emit(nft, "PublicSale").withArgs(user1.address, 1, 5);
 
             // Deg balance check
-            expect(await deg.balanceOf(user1.address)).to.equal(parseUnits("600"));
+            expect(await deg.balanceOf(user1.address)).to.equal(parseUnits("9600"));
             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("1000"));
 
             // Nft check
@@ -298,35 +298,35 @@ describe("Degis NFT Mint", function () {
             await nft.setStatus(2);
             expect(await nft.status()).to.equal(await nft.STATUS_ALLOWLIST());
 
-            await nft.connect(user3).allowlistSale(3, proof_allowlist_user3);
-            expect(await nft.mintedAmount()).to.equal(5);
-            expect(await nft.balanceOf(user3.address)).to.equal(3);
+            await nft.connect(user3).allowlistSale(proof_allowlist_user3);
+            expect(await nft.mintedAmount()).to.equal(3);
+            expect(await nft.balanceOf(user3.address)).to.equal(1);
             expect(await nft.ownerOf(3)).to.equal(user3.address);
-            expect(await nft.ownerOf(5)).to.equal(user3.address);
+           
 
-            await nft.connect(user4).allowlistSale(3, proof_allowlist_user4);
-            expect(await nft.mintedAmount()).to.equal(8);
-            expect(await nft.balanceOf(user3.address)).to.equal(3);
-            expect(await nft.ownerOf(6)).to.equal(user4.address);
-            expect(await nft.ownerOf(8)).to.equal(user4.address);
+            await nft.connect(user4).allowlistSale(proof_allowlist_user4);
+            expect(await nft.mintedAmount()).to.equal(4);
+            expect(await nft.balanceOf(user4.address)).to.equal(1);
+            expect(await nft.ownerOf(4)).to.equal(user4.address);
+            
 
             // Public Sale
             await nft.setStatus(3);
             expect(await nft.status()).to.equal(await nft.STATUS_PUBLICSALE());
 
             await nft.publicSale(5);
-            expect(await nft.mintedAmount()).to.equal(13);
+            expect(await nft.mintedAmount()).to.equal(9);
 
             await nft.connect(user1).publicSale(5);
-            expect(await nft.mintedAmount()).to.equal(18);
+            expect(await nft.mintedAmount()).to.equal(14);
 
             await nft.connect(user2).publicSale(2);
-            expect(await nft.mintedAmount()).to.equal(20);
+            expect(await nft.mintedAmount()).to.equal(16);
 
-            await nft.ownerMint(dev_account.address, 480);
+            await nft.ownerMint(dev_account.address, 484);
 
             await expect(nft.ownerMint(dev_account.address, 1)).to.be.revertedWith("Exceed max supply");
-            await expect(nft.connect(user2).publicSale(1)).to.be.revertedWith("Max mint supply reached");
+            await expect(nft.connect(user2).publicSale(1)).to.be.revertedWith("Exceed max supply");
 
             // Some extra test for uri
             await nft.setBaseURI("https://degis.io/");

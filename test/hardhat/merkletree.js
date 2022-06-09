@@ -61,16 +61,16 @@ describe('airdropSale & allowlistSale', function () {
     await expect(whitelistSale.airdropClaim(merkleProof)).to.be.rejectedWith('already claimed')
     await expect(whitelistSale.connect(allowlist[0]).airdropClaim(invalidMerkleProof)).to.be.rejectedWith('invalid merkle proof')
 
-    await expect(whitelistSale.connect(allowlist[0]).allowlistSale(1, merkleProof2)).to.be.rejectedWith('Not in allowlist sale phase')
+    await expect(whitelistSale.connect(allowlist[0]).allowlistSale(merkleProof2)).to.be.rejectedWith('Not in allowlist sale phase')
 
     // Allowlist sale: status 2
     await whitelistSale.setStatus(2)
     try {
-      await expect(whitelistSale.connect(allowlist[0]).allowlistSale(1, merkleProof2)).to.not.be.rejected
-      await expect(whitelistSale.connect(allowlist[0]).allowlistSale(1, merkleProof2)).to.be.rejectedWith('already minted')
+      await expect(whitelistSale.connect(allowlist[0]).allowlistSale( merkleProof2)).to.not.be.rejected
+      await expect(whitelistSale.connect(allowlist[0]).allowlistSale(merkleProof2)).to.be.rejectedWith('already minted')
     } catch (error) {
       console.log(error)
     }
-    await expect(whitelistSale.connect(airdrop[0]).allowlistSale(1, invalidMerkleProof2, { value: ethers.utils.parseEther("1") })).to.be.rejectedWith('invalid merkle proof')
+    await expect(whitelistSale.connect(airdrop[0]).allowlistSale(invalidMerkleProof2, { value: ethers.utils.parseEther("1") })).to.be.rejectedWith('invalid merkle proof')
   })
 })

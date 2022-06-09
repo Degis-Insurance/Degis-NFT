@@ -10,11 +10,18 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 contract DegisNFT is ERC721, Ownable {
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Status defined as constants rather than enum
     uint256 public constant STATUS_INIT = 0;
     uint256 public constant STATUS_AIRDROP = 1;
     uint256 public constant STATUS_ALLOWLIST = 2;
     uint256 public constant STATUS_PUBLICSALE = 3;
+
+    // Current status of minting
+    uint256 public status;
 
     // address public constant DEG = 0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645;
     address public DEG;
@@ -24,25 +31,22 @@ contract DegisNFT is ERC721, Ownable {
 
     // Public sale price is 200 DEG
     uint256 public constant PRICE_PUBLICSALE = 200 ether;
-    uint256 public constant PRICE_ALLOWLIST = 100 ether;
+    uint256 public constant PRICE_ALLOWLIST = 200 ether;
 
-    uint256 public constant MAXAMOUNT_PUBLICSALE = 5;
-    uint256 public constant MAXAMOUNT_ALLOWLIST = 3;
-
-    // Current status of minting
-    uint256 public status;
+    uint256 public constant MAXAMOUNT_PUBLICSALE = 10;
 
     // Amount of NFTs already minted
-    // Current tokenId
+    // Current token Id
     uint256 public mintedAmount;
 
     // wallet mapping that allows wallets to mint during airdrop and allowlist sale
-    mapping(address => bool) public allowlistMinted;
     mapping(address => bool) public airdroplistClaimed;
+    mapping(address => bool) public allowlistMinted;
 
     // amount minted on public sale per wallet
     mapping(address => uint256) public mintedOnPublic;
 
+    // Base uri for the images
     string public baseURI;
 
     // Merkle root of airdrop list
@@ -172,7 +176,7 @@ contract DegisNFT is ERC721, Ownable {
      * @param _quantity Amount of NFTs to mint
      */
     function ownerMint(address _user, uint256 _quantity) external onlyOwner {
-        require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
+        require(mintedAmount + _quantity <= MAX_SUPPLY, "Exceed max supply");
         _mint(_user, _quantity);
     }
 
@@ -202,16 +206,12 @@ contract DegisNFT is ERC721, Ownable {
     /**
      * @notice Allowlist minting
      *
-     * @param _quantity    Amount of NFTs to mint
      * @param _merkleProof Merkle proof for this user
      */
-    function allowlistSale(uint256 _quantity, bytes32[] calldata _merkleProof)
-        external
-        payable
-    {
+    function allowlistSale(bytes32[] calldata _merkleProof) external payable {
         require(status == STATUS_ALLOWLIST, "Not in allowlist sale phase");
         require(!allowlistMinted[msg.sender], "already minted");
-        require(_quantity <= MAXAMOUNT_ALLOWLIST, "Too many tokens");
+        require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
         require(
             MerkleProof.verify(
                 _merkleProof,
@@ -221,15 +221,15 @@ contract DegisNFT is ERC721, Ownable {
             "invalid merkle proof"
         );
 
-        uint256 amountToPay = _quantity * PRICE_ALLOWLIST;
+        uint256 amountToPay = PRICE_ALLOWLIST;
 
         // Transfer deg tokens
         IERC20(DEG).safeTransferFrom(msg.sender, address(this), amountToPay);
 
-        _mint(msg.sender, _quantity);
+        _mint(msg.sender, 1);
         allowlistMinted[msg.sender] = true;
 
-        emit AllowlistSale(msg.sender, _quantity, mintedAmount);
+        emit AllowlistSale(msg.sender, 1, mintedAmount);
     }
 
     /**
@@ -243,15 +243,11 @@ contract DegisNFT is ERC721, Ownable {
         require(status == STATUS_PUBLICSALE, "Not in public sale phase");
         require(tx.origin == msg.sender, "No proxy transactions");
 
-        uint256 userAlreadyMinted = mintedOnPublic[msg.sender];
         require(
-            userAlreadyMinted + _quantity <= MAXAMOUNT_PUBLICSALE,
+            mintedOnPublic[msg.sender] + _quantity <= MAXAMOUNT_PUBLICSALE,
             "Max public sale amount reached"
         );
-        require(
-            userAlreadyMinted + _quantity + mintedAmount <= MAX_SUPPLY,
-            "Max mint supply reached"
-        );
+        require(_quantity + mintedAmount <= MAX_SUPPLY, "Exceed max supply");
 
         // DEG to pay for minting
         uint256 amountToPay = _quantity * PRICE_PUBLICSALE;
