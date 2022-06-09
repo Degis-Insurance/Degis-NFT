@@ -20,6 +20,10 @@ contract DegisNFT is ERC721, Ownable {
     uint256 public constant STATUS_ALLOWLIST = 2;
     uint256 public constant STATUS_PUBLICSALE = 3;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Current status of minting
     uint256 public status;
 
@@ -55,6 +59,10 @@ contract DegisNFT is ERC721, Ownable {
     // Merkle root of allowlist
     bytes32 public allowlistMerkleRoot;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event StatusChange(uint256 oldStatus, uint256 newStatus);
     event SetBaseURI(string baseUri);
     event WithdrawERC20(
@@ -66,6 +74,10 @@ contract DegisNFT is ERC721, Ownable {
     event AllowlistSale(address user, uint256 quantity, uint256 tokenId);
     event PublicSale(address user, uint256 quantity, uint256 tokenId);
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
      * @notice Constructor
      *
@@ -74,6 +86,10 @@ contract DegisNFT is ERC721, Ownable {
     constructor(address _degis) ERC721("DegisNFT", "DegisNFT") {
         DEG = _degis;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Check if the address is inside allow list
@@ -116,6 +132,10 @@ contract DegisNFT is ERC721, Ownable {
                 keccak256(abi.encodePacked(_user))
             );
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Change minting status
@@ -168,6 +188,10 @@ contract DegisNFT is ERC721, Ownable {
     function setAllowlistMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
         allowlistMerkleRoot = _merkleRoot;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Owner minting
@@ -281,6 +305,10 @@ contract DegisNFT is ERC721, Ownable {
         IERC20(_token).transfer(msg.sender, _amount);
         emit WithdrawERC20(_token, _amount, msg.sender);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice BaseURI
