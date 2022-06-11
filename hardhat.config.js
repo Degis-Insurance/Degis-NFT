@@ -1,6 +1,8 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy")
 
+require("@nomiclabs/hardhat-etherscan")
+
 require('dotenv').config();
 
 require("./tasks/DegisNFT.js")
@@ -48,6 +50,9 @@ module.exports = {
       avax: 1,
     },
   },
+  etherscan: {
+    apiKey: "I4IJTQGA3XWMBDU72J54UBC8FGMWR2ZCES"
+  },
   networks: {
     fuji: {
       url: process.env.FUJI_URL || "",
@@ -58,5 +63,14 @@ module.exports = {
       },
       timeout: 60000,
     },
+    avaxTest: {
+      url: process.env.AVAX_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
+        count: 20,
+      },
+      timeout: 60000,
+    }
   }
 };

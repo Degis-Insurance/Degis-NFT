@@ -59,6 +59,21 @@ task("setAllowlistRoot", "Set merkle root of allowlist")
         console.log("Tx details: ", await tx.wait())
     })
 
+task("setBaseURI", "Set the baseURI of degis nft")
+    .addParam("uri", "base uri", null, types.string)
+    .setAction(async (args, hre) => {
+        const { network } = hre;
+
+        const [dev_account] = await hre.ethers.getSigners();
+        console.log("signer address:", dev_account.address);
+
+        const tx = await nft.setBaseURI(args.uri);
+        console.log("Tx details: ", await tx.wait());
+
+        const baseURI = await nft.baseURI();
+        console.log("Base uri: ", baseURI);
+    })
+
 
 task("ownerMint", "Owner mint some nfts")
     .addParam("address", "Receiver address", null, types.string)
