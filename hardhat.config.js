@@ -2,6 +2,7 @@ require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy")
 
 require("@nomiclabs/hardhat-etherscan")
+require("hardhat-gas-reporter")
 
 require('dotenv').config();
 
@@ -52,6 +53,9 @@ module.exports = {
   },
   etherscan: {
     apiKey: "I4IJTQGA3XWMBDU72J54UBC8FGMWR2ZCES"
+  },
+  gasReporter: {
+    enabled: true
   },
   networks: {
     fuji: {

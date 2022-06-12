@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/liyang/code/Degis/Degis-NFT/contracts/DegisNFT.sol": {
-      "lastModificationDate": 1654763575732,
-      "contentHash": "b81571f5edf06f52b52b20cd2d1fb8fd",
+      "lastModificationDate": 1655048703380,
+      "contentHash": "c7e3b75e10fc82a0c960f3cd52c8f4f2",
       "sourceName": "contracts/DegisNFT.sol",
       "solcConfig": {
         "version": "0.8.13",

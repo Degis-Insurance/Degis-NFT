@@ -91,10 +91,10 @@ describe("Degis NFT Mint", function () {
             await nft.setStatus(1);
 
             // Wrong user
-            await expect(nft.airdropClaim(proof_airdrop)).to.be.rejectedWith("invalid merkle proof");
+            await expect(nft.airdropClaim(proof_airdrop)).to.be.rejectedWith("Invalid merkle proof");
 
             // True user with wrong proof
-            await expect(nft.connect(user1).airdropClaim(proof_allowlist)).to.be.rejectedWith("invalid merkle proof");
+            await expect(nft.connect(user1).airdropClaim(proof_allowlist)).to.be.rejectedWith("Invalid merkle proof");
         })
 
         it("should be able to claim airdrops", async function () {
@@ -130,7 +130,7 @@ describe("Degis NFT Mint", function () {
 
             // No balance
             await deg.connect(user3).approve(nft.address, parseUnits("1000"));
-            await expect(nft.connect(user3).allowlistSale( proof_allowlist)).to.be.rejectedWith("ERC20: transfer amount exceeds balance");
+            await expect(nft.connect(user3).allowlistSale(proof_allowlist)).to.be.rejectedWith("ERC20: transfer amount exceeds balance");
         })
 
         it("should be able to participate in allowlist sale", async function () {
@@ -167,6 +167,22 @@ describe("Degis NFT Mint", function () {
             expect(await deg.balanceOf(user4.address)).to.equal(parseUnits("800"));
             expect(await deg.balanceOf(nft.address)).to.equal(parseUnits("400"));
 
+        })
+
+        it("should be able to mint airdrop for users", async function () {
+            await nft.setStatus(1);
+
+            const userList = [dev_account.address, user1.address, user2.address]
+
+            await expect(nft.mintAirdrop(userList)).to.emit(nft, "MintAirdrop").withArgs(3, 1, 3);
+
+            expect(await nft.balanceOf(dev_account.address)).to.equal(1);
+            expect(await nft.ownerOf(1)).to.equal(dev_account.address);
+            expect(await nft.balanceOf(user1.address)).to.equal(1);
+            expect(await nft.ownerOf(2)).to.equal(user1.address);
+            expect(await nft.balanceOf(user2.address)).to.equal(1);
+            expect(await nft.ownerOf(3)).to.equal(user2.address);
+            
         })
     })
 
@@ -302,13 +318,13 @@ describe("Degis NFT Mint", function () {
             expect(await nft.mintedAmount()).to.equal(3);
             expect(await nft.balanceOf(user3.address)).to.equal(1);
             expect(await nft.ownerOf(3)).to.equal(user3.address);
-           
+
 
             await nft.connect(user4).allowlistSale(proof_allowlist_user4);
             expect(await nft.mintedAmount()).to.equal(4);
             expect(await nft.balanceOf(user4.address)).to.equal(1);
             expect(await nft.ownerOf(4)).to.equal(user4.address);
-            
+
 
             // Public Sale
             await nft.setStatus(3);

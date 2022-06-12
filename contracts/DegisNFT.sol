@@ -70,6 +70,7 @@ contract DegisNFT is ERC721, Ownable {
         uint256 amount,
         address receiver
     );
+    event MintAirdrop(uint256 userAmount, uint256 startId, uint256 finishId);
     event AirdropClaim(address user, uint256 tokenId);
     event AllowlistSale(address user, uint256 quantity, uint256 tokenId);
     event PublicSale(address user, uint256 quantity, uint256 tokenId);
@@ -205,6 +206,30 @@ contract DegisNFT is ERC721, Ownable {
     }
 
     /**
+     * @notice Mint airdrop for users
+     *
+     * @param _users User address list
+     */
+    function mintAirdrop(address[] calldata _users) external onlyOwner {
+        require(status == STATUS_AIRDROP, "Not in airdrop phase");
+
+        uint256 userAmount = _users.length;
+        require(mintedAmount + userAmount <= MAX_SUPPLY, "Exceed max supply");
+
+        uint256 startId = mintedAmount + 1;
+
+        for (uint256 i; i < userAmount; ) {
+            _mint(_users[i], 1);
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        emit MintAirdrop(userAmount, startId, mintedAmount);
+    }
+
+    /**
      * @notice Airdrop claim
      *
      * @param _merkleProof Merkle proof for airdrop
@@ -218,7 +243,7 @@ contract DegisNFT is ERC721, Ownable {
                 airdropMerkleRoot,
                 keccak256(abi.encodePacked(msg.sender))
             ),
-            "invalid merkle proof"
+            "Invalid merkle proof"
         );
         airdroplistClaimed[msg.sender] = true;
 
@@ -234,7 +259,7 @@ contract DegisNFT is ERC721, Ownable {
      */
     function allowlistSale(bytes32[] calldata _merkleProof) external payable {
         require(status == STATUS_ALLOWLIST, "Not in allowlist sale phase");
-        require(!allowlistMinted[msg.sender], "already minted");
+        require(!allowlistMinted[msg.sender], "Already minted");
         require(mintedAmount < MAX_SUPPLY, "Exceed max supply");
         require(
             MerkleProof.verify(
@@ -242,7 +267,7 @@ contract DegisNFT is ERC721, Ownable {
                 allowlistMerkleRoot,
                 keccak256(abi.encodePacked(msg.sender))
             ),
-            "invalid merkle proof"
+            "Invalid merkle proof"
         );
 
         uint256 amountToPay = PRICE_ALLOWLIST;
