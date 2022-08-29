@@ -31,7 +31,7 @@ contract DegisNFT is ERC721, Ownable {
     address public DEG;
 
     // Total supply: 500
-    uint256 public constant MAX_SUPPLY = 500;
+    uint256 public constant MAX_SUPPLY = 499;
 
     // Public sale price is 200 DEG
     uint256 public constant PRICE_PUBLICSALE = 200 ether;

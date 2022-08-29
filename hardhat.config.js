@@ -75,6 +75,15 @@ module.exports = {
         count: 20,
       },
       timeout: 60000,
+    },
+    avax: {
+      url: process.env.AVAX_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
+        count: 20,
+      },
+      timeout: 60000,
     }
   }
 };

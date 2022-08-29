@@ -6,6 +6,12 @@ const getAllowList = () => {
     return allowlist.list;
 }
 
+const getAirdrop = () => {
+    const airdropList = JSON.parse(fs.readFileSync("info/airdrop.json", "utf-8"));
+    return airdropList.list;
+}
+
 module.exports = {
-    getAllowList
+    getAllowList,
+    getAirdrop
 }

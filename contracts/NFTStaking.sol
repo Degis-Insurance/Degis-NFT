@@ -8,10 +8,18 @@ import {IDegisNFT} from "./interfaces/IDegisNFT.sol";
 import {IVeDEG} from "./interfaces/IVeDEG.sol";
 
 contract NFTStaking is Ownable, IERC721Receiver {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     IDegisNFT public degisNFT;
     IVeDEG public veDEG;
 
-    mapping(address => uint256) public champions;
+    mapping(address => uint256) public userStaked;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event championReceived(
         address operator,
@@ -23,10 +31,18 @@ contract NFTStaking is Ownable, IERC721Receiver {
     event Stake(address user, uint256 tokenId, uint256 boostType);
     event Unstake(address user, uint256 tokenId);
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     constructor(address _degisNFT, address _veDEG) {
         degisNFT = IDegisNFT(_degisNFT);
         veDEG = IVeDEG(_veDEG);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Set degis nft contract
@@ -46,18 +62,9 @@ contract NFTStaking is Ownable, IERC721Receiver {
         veDEG = IVeDEG(_veDEG);
     }
 
-    /**
-     * @notice Selector for receiving ERC721 tokens
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external override returns (bytes4) {
-        emit championReceived(operator, from, tokenId, data);
-        return this.onERC721Received.selector;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Stake NFT
@@ -68,14 +75,16 @@ contract NFTStaking is Ownable, IERC721Receiver {
         require(degisNFT.ownerOf(_tokenId) == msg.sender, "not owner of token");
         require(_tokenId != 0, "tokenId cannot be 0");
 
-        require(champions[msg.sender] == 0, "already staked");
+        require(userStaked[msg.sender] == 0, "already staked");
 
         degisNFT.approve(address(this), _tokenId);
 
         degisNFT.safeTransferFrom(msg.sender, address(this), _tokenId);
-        champions[msg.sender] = _tokenId;
+        userStaked[msg.sender] = _tokenId;
 
-        uint256 boostType = _tokenId > 99 ? 2 : 1;
+        // If token id > 99 normal boost
+        // If token id <= 99 rare boost
+        uint256 boostType = _tokenId > 99 ? 1 : 2;
         veDEG.boostVeDEG(msg.sender, boostType);
 
         emit Stake(msg.sender, _tokenId, boostType);
@@ -87,15 +96,29 @@ contract NFTStaking is Ownable, IERC721Receiver {
      * @param _tokenId Token id to withdraw
      */
     function withdraw(uint256 _tokenId) external {
-        require(champions[msg.sender] == _tokenId, "not owner of token");
+        require(userStaked[msg.sender] == _tokenId, "not owner of token");
 
-        // veDEGContract.updateNFTMultiplier(msg.sender, 10);
         degisNFT.safeTransferFrom(address(this), msg.sender, _tokenId);
-        champions[msg.sender] = 0;
 
-        // Unboost
+        // Delete the record
+        userStaked[msg.sender] = 0;
+
+        // Unboost veDEG
         veDEG.unBoostVeDEG(msg.sender);
 
         emit Unstake(msg.sender, _tokenId);
+    }
+
+    /**
+     * @notice Selector for receiving ERC721 tokens
+     */
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override returns (bytes4) {
+        emit championReceived(operator, from, tokenId, data);
+        return this.onERC721Received.selector;
     }
 }

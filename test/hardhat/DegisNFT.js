@@ -32,7 +32,7 @@ describe("Degis NFT Mint", function () {
         });
 
         it("should have the correct total supply", async function () {
-            expect(await nft.MAX_SUPPLY()).to.equal(500);
+            expect(await nft.MAX_SUPPLY()).to.equal(499);
         });
 
         it("should have the correct amounts", async function () {
@@ -182,7 +182,7 @@ describe("Degis NFT Mint", function () {
             expect(await nft.ownerOf(2)).to.equal(user1.address);
             expect(await nft.balanceOf(user2.address)).to.equal(1);
             expect(await nft.ownerOf(3)).to.equal(user2.address);
-            
+
         })
     })
 
@@ -339,7 +339,7 @@ describe("Degis NFT Mint", function () {
             await nft.connect(user2).publicSale(2);
             expect(await nft.mintedAmount()).to.equal(16);
 
-            await nft.ownerMint(dev_account.address, 484);
+            await nft.ownerMint(dev_account.address, 483);
 
             await expect(nft.ownerMint(dev_account.address, 1)).to.be.revertedWith("Exceed max supply");
             await expect(nft.connect(user2).publicSale(1)).to.be.revertedWith("Exceed max supply");

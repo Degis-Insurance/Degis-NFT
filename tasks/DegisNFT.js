@@ -1,6 +1,6 @@
 
 const { types, task } = require("hardhat/config");
-const { getAllowList } = require("../scripts/allowList");
+const { getAllowList, getAirdrop } = require("../scripts/allowList");
 const { readAddressList } = require("../scripts/contractAddress");
 
 require("@nomiclabs/hardhat-ethers")
@@ -43,9 +43,10 @@ task("setAllowlistRoot", "Set merkle root of allowlist")
         console.log("signer address:", dev_account.address);
 
         const allowlist = getAllowList();
-        console.log("Full allowlist: ", allowlist);
+        const stdList = allowlist.map(address => hre.ethers.utils.getAddress(address))
+        console.log("Full allowlist: ", stdList);
 
-        const leaves = allowlist.map(account => keccak256(account))
+        const leaves = stdList.map(account => keccak256(account))
         const tree = new MerkleTree(leaves, keccak256, { sort: true })
         const merkleRoot = tree.getHexRoot();
 
@@ -59,6 +60,53 @@ task("setAllowlistRoot", "Set merkle root of allowlist")
         console.log("Tx details: ", await tx.wait())
     })
 
+
+task("mintAirdrop", "Mint airdrop for users")
+    .setAction(async (_, hre) => {
+        const { network } = hre;
+
+        const [dev_account] = await hre.ethers.getSigners();
+        console.log("signer address:", dev_account.address);
+
+        const airdropList = await getAirdrop();
+        const stdList = airdropList.map(address => hre.ethers.utils.getAddress(address))
+        console.log("airdrop list:", stdList);
+
+        const nftFactory = await hre.ethers.getContractFactory("DegisNFT");
+        const nftAddress = addressList[network.name].DegisNFT;
+        const nft = nftFactory.attach(nftAddress);
+
+        const tx = await nft.mintAirdrop(airdropList);
+        console.log("Mint airdrop", await tx.wait());
+
+        const mintedAmount = await nft.mintedAmount();
+        console.log("minted amount", mintedAmount.toNumber())
+    })
+
+task("transferNFT", "Transfer degis nft from owner")
+    .addParam("id", "Token id", null, types.int)
+    .addParam("address", "Receiver Address", null, types.string)
+    .setAction(async (args, hre) => {
+        const { network } = hre;
+
+        const [dev_account] = await hre.ethers.getSigners();
+        console.log("signer address:", dev_account.address);
+
+        const nftFactory = await hre.ethers.getContractFactory("DegisNFT");
+        const nftAddress = addressList[network.name].DegisNFT;
+        const nft = nftFactory.attach(nftAddress);
+
+        const initOwner = await nft.ownerOf(args.id);
+        console.log("init owner: ", initOwner)
+
+        const tx = await nft.transferFrom(dev_account.address, args.address, args.id);
+        console.log("Mint airdrop", await tx.wait());
+
+        const owner = await nft.ownerOf(args.id);
+        console.log("current owner: ", owner)
+    })
+
+
 task("setBaseURI", "Set the baseURI of degis nft")
     .addParam("uri", "base uri", null, types.string)
     .setAction(async (args, hre) => {
@@ -66,6 +114,11 @@ task("setBaseURI", "Set the baseURI of degis nft")
 
         const [dev_account] = await hre.ethers.getSigners();
         console.log("signer address:", dev_account.address);
+
+        const nftFactory = await hre.ethers.getContractFactory("DegisNFT");
+        const nftAddress = addressList[network.name].DegisNFT;
+        const nft = nftFactory.attach(nftAddress);
+
 
         const tx = await nft.setBaseURI(args.uri);
         console.log("Tx details: ", await tx.wait());

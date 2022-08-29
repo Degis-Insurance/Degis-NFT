@@ -56,8 +56,8 @@ describe("Degis NFT Staking", function () {
             await nft.setApprovalForAll(nftStaking.address, true);
             // await nft.approve(nftStaking.address, 1);
 
-            await expect(nftStaking.stake(1)).to.emit(nftStaking, "Stake").withArgs(dev_account.address, 1, 1);
-            
+            await expect(nftStaking.stake(1)).to.emit(nftStaking, "Stake").withArgs(dev_account.address, 1, 2);
+
 
             await expect(nftStaking.stake(1)).to.be.revertedWith("not owner of token")
             await expect(nftStaking.stake(2)).to.be.revertedWith("already staked")
@@ -66,7 +66,7 @@ describe("Degis NFT Staking", function () {
         it("should be able to unstake nft", async function () {
             await nft.setApprovalForAll(nftStaking.address, true);
 
-            
+
             await expect(nftStaking.withdraw(1)).to.be.revertedWith("not owner of token")
 
             await nftStaking.stake(1);

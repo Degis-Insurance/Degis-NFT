@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/liyang/code/Degis/Degis-NFT/contracts/DegisNFT.sol": {
-      "lastModificationDate": 1655048703380,
-      "contentHash": "c7e3b75e10fc82a0c960f3cd52c8f4f2",
+      "lastModificationDate": 1655090114055,
+      "contentHash": "c15c046634f662df3b5221dd1c03b57f",
       "sourceName": "contracts/DegisNFT.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -793,8 +793,8 @@
       ]
     },
     "/home/liyang/code/Degis/Degis-NFT/contracts/NFTStaking.sol": {
-      "lastModificationDate": 1654428794993,
-      "contentHash": "82791dec889f78ac5633783d397da282",
+      "lastModificationDate": 1655264933486,
+      "contentHash": "effff39664d4fd1d019ec15d5cf235f0",
       "sourceName": "contracts/NFTStaking.sol",
       "solcConfig": {
         "version": "0.8.13",
